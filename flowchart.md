@@ -3,4 +3,5 @@
 3. Database (storage layer) ? => Postgres
 4. API layer (query interface) ? => REST, GraphQL and websocket
 
-(Flowchart)[./indexer-flowchart.png]
+![Flowchart](./indexer-flowchart.png)
+
