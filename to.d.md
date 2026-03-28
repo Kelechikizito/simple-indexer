@@ -7,3 +7,11 @@ The biggest beginner mistake is trying to index everything. Start by picking one
 
 
 The best way to understand all of this concretely is to write a tiny indexer that just tracks ERC-20 Transfer events for a single contract — even 50 lines of JS with viem will touch every one of these steps.
+
+
+Hey, 
+
+1. I used JSON-RPC as the data source.
+2. Yes, the indexing engine is implemented in plain JavaScript.
+3. For the API layer, I chose REST to keep the system as simple as possible and to optimize for cost efficiency.
+4. Regarding ERC20 Approval events, I included them because approve-related vulnerabilities have been actively exploited in recent incidents, so monitoring them can help identify potentially vulnerable or exploited contracts.
