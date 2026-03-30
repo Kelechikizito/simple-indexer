@@ -1,5 +1,6 @@
 import { parseAbiItem, formatUnits } from 'viem'
 import { publicClient } from './client.js'
+import latestBlock from './utils/latest-block.js' 
 import sql from './db.js'
 
 const CONTRACT = '0xa566b7C2493e1b48363CCE6F862dC83678C86f03'
@@ -35,7 +36,11 @@ const decimals = await publicClient.readContract({
   functionName: 'decimals'
 }) as number
 
-const logs = await getTransfers(24755977n, 24755980n)
+const latestBlockNumber = await latestBlock();
+if (!latestBlockNumber) {
+  throw new Error('Failed to fetch latest block number');
+}
+const logs = await getTransfers(latestBlockNumber - 5n, latestBlockNumber);
 console.log(`Fetched ${logs.length} logs, writing to DB...`)
 
 for (const log of logs) {
