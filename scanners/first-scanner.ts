@@ -5,7 +5,6 @@ import sql from './db.js'
 
 const CONTRACT = '0xa566b7C2493e1b48363CCE6F862dC83678C86f03'
 
-// same as getUsersOver but for transfers
 async function getTransfers(fromBlock: bigint, toBlock: bigint) {
   const logs = await publicClient.getLogs({
     address: CONTRACT,
@@ -16,7 +15,6 @@ async function getTransfers(fromBlock: bigint, toBlock: bigint) {
   return logs
 }
 
-// same as insertUser but for a transfer log
 async function insertTransfer({ blockNumber, txHash, logIndex, from, to, valueRaw, valueDecimal, blockTimestamp }: { blockNumber: number; txHash: string; logIndex: number; from: string; to: string; valueRaw: string; valueDecimal: string; blockTimestamp: number }) {
   const result = await sql`
     insert into transfers
@@ -29,34 +27,56 @@ async function insertTransfer({ blockNumber, txHash, logIndex, from, to, valueRa
   return result
 }
 
-// main
+// ETH reorgs can cause previously indexed blocks to be removed from the canonical chain. To handle this, we can check if the block of each indexed transfer is still part of the canonical chain. If not, we can delete that transfer from our database.
+async function deleteTransfer(txHash: string, logIndex: number) {
+  await sql`
+    delete from transfers
+    where tx_hash = ${txHash}
+    and log_index = ${logIndex}
+  `
+  console.log(`Reorg detected — deleted tx: ${txHash} log: ${logIndex}`)
+}
+
 const decimals = await publicClient.readContract({
   address: CONTRACT,
   abi: [parseAbiItem('function decimals() returns (uint8)')],
   functionName: 'decimals'
 }) as number
 
-const latestBlockNumber = await latestBlock();
-if (!latestBlockNumber) {
-  throw new Error('Failed to fetch latest block number');
+let lastIndexedBlock: bigint | null = null
+
+while (true) {
+  const latestBlockNumber = await latestBlock()
+
+  if (!latestBlockNumber) {
+    await new Promise(r => setTimeout(r, 30_000))
+    continue
+  }
+
+  const fromBlock = lastIndexedBlock ? lastIndexedBlock + 1n : latestBlockNumber - 5n
+  const logs = await getTransfers(fromBlock, latestBlockNumber)
+  console.log(`Fetched ${logs.length} logs from block ${fromBlock} to ${latestBlockNumber}`)
+
+  for (const log of logs) {
+     if (log.removed) {
+      await deleteTransfer(log.transactionHash, log.logIndex)
+      continue
+    }
+    
+    const [from, to, value] = log.args as [string, string, bigint]
+    await insertTransfer({
+      blockNumber: Number(log.blockNumber),
+      txHash: log.transactionHash,
+      logIndex: log.logIndex,
+      from: from.toLowerCase(),
+      to: to.toLowerCase(),
+      valueRaw: value.toString(),
+      valueDecimal: formatUnits(value, decimals),
+      blockTimestamp: Number(log.blockTimestamp)
+    })
+  }
+
+  lastIndexedBlock = latestBlockNumber
+  console.log(`Done. Sleeping 30 seconds...`)
+  await new Promise(r => setTimeout(r, 30_000))
 }
-const logs = await getTransfers(latestBlockNumber - 5n, latestBlockNumber);
-console.log(`Fetched ${logs.length} logs, writing to DB...`)
-
-for (const log of logs) {
-  const [from, to, value] = log.args as [string, string, bigint]
-
-  await insertTransfer({
-    blockNumber: Number(log.blockNumber),
-    txHash: log.transactionHash,
-    logIndex: log.logIndex,
-    from: from.toLowerCase(),
-    to: to.toLowerCase(),
-    valueRaw: value.toString(),
-    valueDecimal: formatUnits(value, decimals),
-    blockTimestamp: Number(log.blockTimestamp)
-  })
-}
-
-console.log('Done.')
-await sql.end()
