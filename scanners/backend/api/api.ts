@@ -1,8 +1,16 @@
 import { Hono } from "hono";
 import { serve } from "@hono/node-server";
+import { cors } from "hono/cors";
 import sql from "../../db.js";
 
 const app = new Hono();
+
+app.use(
+  "/*",
+  cors({
+    origin: "http://localhost:3000",
+  }),
+);
 
 // get all transfers for a specific address
 app.get("/transfers/:address", async (c) => {
@@ -37,5 +45,5 @@ app.get("/status", async (c) => {
   return c.json(result[0]);
 });
 
-serve({ fetch: app.fetch, port: 3000 });
-console.log("API running on http://localhost:3000");
+serve({ fetch: app.fetch, port: 3001 });
+console.log("API running on http://localhost:3001");
