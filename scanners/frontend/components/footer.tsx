@@ -1,6 +1,6 @@
 "use client";
 
-import { Github, ArrowRight } from "lucide-react";
+import { Computer, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 
 export function Footer() {
@@ -60,7 +60,7 @@ export function Footer() {
           >
             <h4 className="text-white font-semibold mb-4">Community</h4>
             <ul className="space-y-2">
-              {["Discord", "Twitter", "GitHub", "Blog"].map((item) => (
+              {["Discord", "Twitter", "Computer", "Blog"].map((item) => (
                 <li key={item}>
                   <a
                     href="#"
@@ -88,9 +88,9 @@ export function Footer() {
             © {new Date().getFullYear()} ChainScan. All rights reserved.
           </motion.p>
 
-          {/* GitHub CTA */}
+          {/* Computer CTA */}
           <motion.a
-            href="https://github.com"
+            href="https://Computer.com"
             target="_blank"
             rel="noopener noreferrer"
             initial={{ opacity: 0, x: 20 }}
@@ -101,8 +101,8 @@ export function Footer() {
             whileTap={{ scale: 0.95 }}
             className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-700 text-gray-300 hover:text-blue-300 hover:border-blue-500/50 transition-all"
           >
-            <Github className="w-5 h-5" />
-            <span>GitHub</span>
+            <Computer className="w-5 h-5" />
+            <span>Computer</span>
           </motion.a>
         </div>
       </div>

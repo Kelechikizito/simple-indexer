@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Zap, API, ShieldAlert } from "lucide-react";
+import { Zap, Webhook, ShieldAlert } from "lucide-react";
 
 const features = [
   {
@@ -11,10 +11,10 @@ const features = [
       "Stream blockchain events as they happen. Stay synchronized with the latest blocks in milliseconds, not hours.",
   },
   {
-    icon: API,
-    title: "REST API Ready",
+    icon: Webhook,
+    title: "REST Webhook Ready",
     description:
-      "Query indexed data with a simple, powerful REST API. Perfect for dashboards, bots, and data pipelines.",
+      "Query indexed data with a simple, powerful REST Webhook. Perfect for dashboards, bots, and data pipelines.",
   },
   {
     icon: ShieldAlert,
