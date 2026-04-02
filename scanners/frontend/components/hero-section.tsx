@@ -1,7 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowRight, Computer } from "lucide-react";
+import { ArrowRight } from "lucide-react";
+import { FiGithub } from "react-icons/fi";
 
 export function HeroSection() {
   const containerVariants = {
@@ -98,14 +99,14 @@ export function HeroSection() {
           </motion.button>
         </motion.div>
 
-        {/* Computer link */}
+        {/* FiGithub link */}
         <motion.a
           variants={itemVariants}
-          href="https://Computer.com"
+          href="https://Github.com"
           className="inline-flex items-center gap-2 text-gray-400 hover:text-blue-300 transition-colors group"
         >
-          <Computer className="w-5 h-5" />
-          <span>View on Computer</span>
+          <FiGithub className="w-5 h-5" />
+          <span>View on Github</span>
           <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
         </motion.a>
       </motion.div>
