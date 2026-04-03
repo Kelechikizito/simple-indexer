@@ -1,5 +1,7 @@
 // The file creates the connection to each network, i.e, to a node in each 9 networks.
 
+import * as dotenv from "dotenv";
+dotenv.config();
 import { createPublicClient, http } from "viem";
 import {
   mainnet,
