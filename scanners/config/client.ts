@@ -1,12 +1,17 @@
+// The file creates the connection to each network, i.e, to a node in each 9 networks.
+
 import { createPublicClient, http } from "viem";
-import { mainnet } from "viem/chains";
-import { arbitrum } from "viem/chains";
-import { optimism } from "viem/chains";
-import { base } from "viem/chains";
-import { zksync } from "viem/chains";
-import { avalanche } from "viem/chains";
-import { linea } from "viem/chains";
-import { monad } from "viem/chains";
+import {
+  mainnet,
+  arbitrum,
+  optimism,
+  base,
+  zksync,
+  avalanche,
+  linea,
+  monad,
+  polygon,
+} from "viem/chains";
 
 export const publicClient = createPublicClient({
   chain: mainnet,
@@ -55,5 +60,12 @@ export const publicClientMonad = createPublicClient({
   chain: monad,
   transport: http(
     "https://monad-mainnet.g.alchemy.com/v2/17GHtHVS2qieiVAr5wJjZ",
+  ),
+});
+
+export const publicClientPolygon = createPublicClient({
+  chain: polygon,
+  transport: http(
+    "https://polygon-mainnet.g.alchemy.com/v2/17GHtHVS2qieiVAr5wJjZ",
   ),
 });
