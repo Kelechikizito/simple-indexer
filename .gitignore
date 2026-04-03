@@ -2,5 +2,9 @@
 node_modules/
 
 .env
-
 scanners/.env
+backend/.env
+frontend/.env
+
+# catch all .env files at any depth
+**/.env
