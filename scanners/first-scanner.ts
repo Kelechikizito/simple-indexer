@@ -1,7 +1,7 @@
 import { parseAbiItem, formatUnits } from "viem";
-import { publicClient } from "./client.js";
+import { publicClient } from "./config/client.js";
 import latestBlock from "./utils/latest-block.js";
-import sql from "./db.js";
+import sql from "./backend/database/db.js";
 
 const CONTRACT = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
 
