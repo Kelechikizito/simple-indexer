@@ -4,9 +4,7 @@ The indexer tracks 5 protocols to listen to all liquidation events across 12 net
 
 - Aave V3
 - Compound v3
-- UNISWAP
-- Lido
-- CurveSwap
-- Hyperliquid
+- Morpho
+- SparkLend
 
 - Real-time Notifications: Integrated Telegram bot to alert on high-value transactions (whales).
