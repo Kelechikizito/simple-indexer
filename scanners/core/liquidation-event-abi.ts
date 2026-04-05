@@ -64,3 +64,15 @@ export const morphoLiquidationEventAbi = [
     ],
   },
 ] as const;
+
+export const CHAIN_IDS = {
+  mainnet: 1,
+  arbitrum: 42161,
+  optimism: 10,
+  base: 8453,
+  zksync: 324,
+  avalanche: 43114,
+  linea: 59144,
+  monad: 10143,
+  polygon: 137,
+} as const;
