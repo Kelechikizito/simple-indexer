@@ -17,7 +17,9 @@ import {
 
 const ETH_MAINNET_API_KEY = process.env.ETH_MAINNET_API_KEY;
 const ARBITRUM_MAINNET_API_KEY = process.env.ARBITRUM_MAINNET_API_KEY;
+const ARBITRUM_MAINNET_API_KEY_TWO = process.env.ARBITRUM_MAIINET_API_KEY_TWO;
 const OPTIMISM_MAINNET_API_KEY = process.env.OPTIMISM_MAINNET_API_KEY;
+const OPTIMISM_MAINNET_API_KEY_TWO = process.env.OPTIMISM_MAINNET_API_KEY_TWO;
 const BASE_MAINNET_API_KEY = process.env.BASE_MAINNET_API_KEY;
 const ZKSYNC_MAINNET_API_KEY = process.env.ZKSYNC_MAINNET_API_KEY;
 const AVALANCHE_MAINNET_API_KEY = process.env.AVALANCHE_MAINNET_API_KEY;
@@ -32,12 +34,12 @@ export const publicClient = createPublicClient({
 
 export const publicClientArbitrum = createPublicClient({
   chain: arbitrum,
-  transport: http(`${ARBITRUM_MAINNET_API_KEY}`),
+  transport: http(`${ARBITRUM_MAINNET_API_KEY_TWO}`),
 });
 
 export const publicClientOptimism = createPublicClient({
   chain: optimism,
-  transport: http(`${OPTIMISM_MAINNET_API_KEY}`),
+  transport: http(`${OPTIMISM_MAINNET_API_KEY_TWO}`),
 });
 
 export const publicClientBase = createPublicClient({
