@@ -1,6 +1,6 @@
 Defi-Liquidation-Indexer
 
-The indexer tracks 5 protocols to listen to all liquidation events across 9 networks
+The indexer tracks 4 protocols to listen to all liquidation events across 9 networks
 
 - Aave V3
 - Compound v3

@@ -1,6 +1,6 @@
 import { parseAbiItem, formatUnits } from "viem";
 import { publicClient } from "./config/client.js";
-import latestBlock from "./utils/latest-block.js";
+import { latestBlockMainnet } from "./utils/latest-block.ts";
 import sql from "./backend/database/db.js";
 
 const CONTRACT = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
@@ -66,19 +66,19 @@ const decimals = (await publicClient.readContract({
 let lastIndexedBlock: bigint | null = null;
 
 while (true) {
-  const latestBlockNumber = await latestBlock();
+  const latestBlockMainnetNumber = await latestBlockMainnet();
 
-  if (!latestBlockNumber) {
+  if (!latestBlockMainnetNumber) {
     await new Promise((r) => setTimeout(r, 30_000));
     continue;
   }
 
   const fromBlock = lastIndexedBlock
     ? lastIndexedBlock + 1n
-    : latestBlockNumber - 5n;
-  const logs = await getTransfers(fromBlock, latestBlockNumber);
+    : latestBlockMainnetNumber - 5n;
+  const logs = await getTransfers(fromBlock, latestBlockMainnetNumber);
   console.log(
-    `Fetched ${logs.length} logs from block ${fromBlock} to ${latestBlockNumber}`,
+    `Fetched ${logs.length} logs from block ${fromBlock} to ${latestBlockMainnetNumber}`,
   );
 
   for (const log of logs) {
@@ -100,7 +100,7 @@ while (true) {
     });
   }
 
-  lastIndexedBlock = latestBlockNumber;
+  lastIndexedBlock = latestBlockMainnetNumber;
   console.log(`Done. Sleeping 30 seconds...`);
   await new Promise((r) => setTimeout(r, 30_000));
 }
