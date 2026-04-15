@@ -261,6 +261,6 @@ while (true) {
   lastIndexedBlockPolygon = toBlockPolygon;
   lastIndexedBlockZksync = toBlockZksync;
 
-  console.log(`Done. Sleeping 10 seconds...`);
+  console.log(`Done. Sleeping 30 seconds...`);
   await new Promise((r) => setTimeout(r, 10_000));
 }

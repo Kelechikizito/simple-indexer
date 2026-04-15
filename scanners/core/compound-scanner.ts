@@ -1,0 +1,225 @@
+import { formatUnits } from "viem";
+import {
+  publicClient,
+  publicClientArbitrum,
+  publicClientAvalanche,
+  publicClientBase,
+  publicClientLinea,
+  publicClientOptimism,
+  publicClientPolygon,
+  publicClientZksync,
+} from "../config/client.js";
+import {
+  latestBlockMainnet,
+  latestBlockArbitrum,
+  latestBlockOptimism,
+  latestBlockAvalanche,
+  latestBlockBase,
+  latestBlockLinea,
+  latestBlockPolygon,
+  latestBlockZksync,
+} from "../utils/latest-block.ts";
+
+import {
+  compoundV3AddressesMainnet,
+  compoundV3AddressesArbitrum,
+  compoundV3AddressesOptimism,
+  compoundV3AddressesBase,
+  compoundV3AddressesLinea,
+  compoundV3AddressesPolygon,
+} from "./compound-v3/addresses.ts";
+import { compoundV3LiquidationEventAbi } from "./liquidation-event-abi.ts";
+
+let lastIndexedBlock: bigint | null = null;
+let lastIndexedBlockArbitrum: bigint | null = null;
+let lastIndexedBlockOptimism: bigint | null = null;
+let lastIndexedBlockBase: bigint | null = null;
+let lastIndexedBlockLinea: bigint | null = null;
+let lastIndexedBlockPolygon: bigint | null = null;
+
+async function getLiquidateEventMainnet(fromBlock: bigint, toBlock: bigint) {
+  const mainnetLogs = await publicClient.getLogs({
+    address: [
+      compoundV3AddressesMainnet.USDC,
+      compoundV3AddressesMainnet.USDT,
+      compoundV3AddressesMainnet.WETH,
+    ],
+    event: compoundV3LiquidationEventAbi[0],
+    fromBlock,
+    toBlock,
+  });
+  return mainnetLogs;
+}
+
+async function getLiquidateEventArbitrum(fromBlock: bigint, toBlock: bigint) {
+  const arbitrumLogs = await publicClientArbitrum.getLogs({
+    address: [
+      compoundV3AddressesArbitrum.USDC,
+      compoundV3AddressesArbitrum.USDT,
+      compoundV3AddressesArbitrum.WETH,
+    ],
+    event: compoundV3LiquidationEventAbi[0],
+    fromBlock,
+    toBlock,
+  });
+  return arbitrumLogs;
+}
+
+async function getLiquidateEventOptimism(fromBlock: bigint, toBlock: bigint) {
+  const optimismLogs = await publicClientOptimism.getLogs({
+    address: [
+      compoundV3AddressesOptimism.USDC,
+      compoundV3AddressesOptimism.USDT,
+      compoundV3AddressesOptimism.WETH,
+    ],
+    event: compoundV3LiquidationEventAbi[0],
+    fromBlock,
+    toBlock,
+  });
+  return optimismLogs;
+}
+
+async function getLiquidateEventBase(fromBlock: bigint, toBlock: bigint) {
+  const baseLogs = await publicClientBase.getLogs({
+    address: [compoundV3AddressesBase.USDC, compoundV3AddressesBase.WETH],
+    event: compoundV3LiquidationEventAbi[0],
+    fromBlock,
+    toBlock,
+  });
+  return baseLogs;
+}
+
+async function getLiquidateEventLinea(fromBlock: bigint, toBlock: bigint) {
+  const lineaLogs = await publicClientLinea.getLogs({
+    address: [compoundV3AddressesLinea.USDC, compoundV3AddressesLinea.WETH],
+    event: compoundV3LiquidationEventAbi[0],
+    fromBlock,
+    toBlock,
+  });
+  return lineaLogs;
+}
+
+async function getLiquidateEventPolygon(fromBlock: bigint, toBlock: bigint) {
+  const polygonLogs = await publicClientPolygon.getLogs({
+    address: [compoundV3AddressesPolygon.USDC, compoundV3AddressesPolygon.USDT],
+    event: compoundV3LiquidationEventAbi[0],
+    fromBlock,
+    toBlock,
+  });
+  return polygonLogs;
+}
+
+while (true) {
+  const latestBlockMainnetNumber = await latestBlockMainnet();
+  const latestArbitrumBlock = await latestBlockArbitrum();
+  const latestOptimismBlock = await latestBlockOptimism();
+  const latestBaseBlock = await latestBlockBase();
+  const latestLineaBlock = await latestBlockLinea();
+  const latestPolygonBlock = await latestBlockPolygon();
+
+  if (
+    !latestBlockMainnetNumber ||
+    !latestArbitrumBlock ||
+    !latestOptimismBlock ||
+    !latestBaseBlock ||
+    !latestLineaBlock ||
+    !latestPolygonBlock
+  ) {
+    await new Promise((r) => setTimeout(r, 30_000));
+    continue;
+  }
+
+  const fromBlock = lastIndexedBlock
+    ? lastIndexedBlock + 1n
+    : latestBlockMainnetNumber - 5n;
+  const fromBlockArbitrum = lastIndexedBlockArbitrum
+    ? lastIndexedBlockArbitrum + 1n
+    : latestArbitrumBlock - 5n;
+  const fromBlockOptimism = lastIndexedBlockOptimism
+    ? lastIndexedBlockOptimism + 1n
+    : latestOptimismBlock - 5n;
+  const fromBlockBase = lastIndexedBlockBase
+    ? lastIndexedBlockBase + 1n
+    : latestBaseBlock - 5n;
+  const fromBlockLinea = lastIndexedBlockLinea
+    ? lastIndexedBlockLinea + 1n
+    : latestLineaBlock - 5n;
+  const fromBlockPolygon = lastIndexedBlockPolygon
+    ? lastIndexedBlockPolygon + 1n
+    : latestPolygonBlock - 5n;
+
+  const toBlockArbitrum =
+    latestArbitrumBlock - fromBlockArbitrum > 9n
+      ? fromBlockArbitrum + 9n
+      : latestArbitrumBlock;
+  const toBlockOptimism =
+    latestOptimismBlock - fromBlockOptimism > 9n
+      ? fromBlockOptimism + 9n
+      : latestOptimismBlock;
+  const toBlockBase =
+    latestBaseBlock - fromBlockBase > 9n ? fromBlockBase + 9n : latestBaseBlock;
+  const toBlockLinea =
+    latestLineaBlock - fromBlockLinea > 9n
+      ? fromBlockLinea + 9n
+      : latestLineaBlock;
+  const toBlockPolygon =
+    latestPolygonBlock - fromBlockPolygon > 9n
+      ? fromBlockPolygon + 9n
+      : latestPolygonBlock;
+
+  const logsMainnetUSDC = await getLiquidateEventMainnet(
+    fromBlock,
+    latestBlockMainnetNumber,
+  );
+  const logsArbitrumUSDC = await getLiquidateEventArbitrum(
+    fromBlockArbitrum,
+    toBlockArbitrum,
+  );
+  const logsOptimismUSDC = await getLiquidateEventOptimism(
+    fromBlockOptimism,
+    toBlockOptimism,
+  );
+  const logsBaseUSDC = await getLiquidateEventBase(fromBlockBase, toBlockBase);
+  const logsLineaUSDC = await getLiquidateEventLinea(
+    fromBlockLinea,
+    toBlockLinea,
+  );
+  const logsPolygonUSDC = await getLiquidateEventPolygon(
+    fromBlockPolygon,
+    toBlockPolygon,
+  );
+
+  console.log(
+    `Fetched ${logsMainnetUSDC.length} USDC logs from block ${fromBlock} to ${latestBlockMainnetNumber}`,
+  );
+  console.log(logsMainnetUSDC);
+  console.log(
+    `Fetched ${logsArbitrumUSDC.length} USDC logs from block ${fromBlockArbitrum} to ${toBlockArbitrum}`,
+  );
+  console.log(logsArbitrumUSDC);
+  console.log(
+    `Fetched ${logsOptimismUSDC.length} USDC logs from block ${fromBlockOptimism} to ${toBlockOptimism}`,
+  );
+  console.log(logsOptimismUSDC);
+  console.log(
+    `Fetched ${logsBaseUSDC.length} USDC logs from block ${fromBlockBase} to ${toBlockBase}`,
+  );
+  console.log(logsBaseUSDC);
+  console.log(
+    `Fetched ${logsLineaUSDC.length} USDC logs from block ${fromBlockLinea} to ${toBlockLinea}`,
+  );
+  console.log(logsLineaUSDC);
+  console.log(
+    `Fetched ${logsPolygonUSDC.length} USDC logs from block ${fromBlockPolygon} to ${toBlockPolygon}`,
+  );
+  console.log(logsPolygonUSDC);
+
+  lastIndexedBlock = latestBlockMainnetNumber;
+  lastIndexedBlockArbitrum = toBlockArbitrum;
+  lastIndexedBlockOptimism = toBlockOptimism;
+  lastIndexedBlockBase = toBlockBase;
+  lastIndexedBlockLinea = toBlockLinea;
+  lastIndexedBlockPolygon = toBlockPolygon;
+  console.log(`Done. Sleeping 30 seconds...`);
+  await new Promise((r) => setTimeout(r, 30_000));
+}
