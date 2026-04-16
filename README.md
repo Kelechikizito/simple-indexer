@@ -1,6 +1,6 @@
 Defi-Liquidation-Indexer
 
-The indexer tracks 4 protocols to listen to all liquidation events across 9 networks
+A high-performance, real-time indexer for DeFi liquidation events on EVM. Monitors Aave V3, Compound V3, Morpho, and SparkLend protocols with sub-second processing and multi-channel notifications.The indexer listen to all liquidation events across 8 networks
 
 - Aave V3
 - Compound v3
