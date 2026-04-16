@@ -13,6 +13,7 @@
   },
   "type": "module",
   "devDependencies": {
+    "@types/node-telegram-bot-api": "^0.64.14",
     "tsx": "^4.21.0"
   }
 }
