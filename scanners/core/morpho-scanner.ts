@@ -1,4 +1,3 @@
-import { formatUnits } from "viem";
 import {
   publicClient,
   publicClientArbitrum,
@@ -7,7 +6,6 @@ import {
   publicClientLinea,
   publicClientOptimism,
   publicClientPolygon,
-  publicClientZksync,
 } from "../config/client.js";
 import {
   latestBlockMainnet,
@@ -17,7 +15,6 @@ import {
   latestBlockBase,
   latestBlockLinea,
   latestBlockPolygon,
-  latestBlockZksync,
 } from "../utils/latest-block.ts";
 
 import { morphoBlueAddresses } from "./morpho/addresses.ts";
@@ -101,7 +98,7 @@ async function getLiquidateEventPolygon(fromBlock: bigint, toBlock: bigint) {
   return polygonLogs;
 }
 
-while (true) {
+export async function scanMorphoOnce() {
   const latestBlockMainnetNumber = await latestBlockMainnet();
   const latestArbitrumBlock = await latestBlockArbitrum();
   const latestOptimismBlock = await latestBlockOptimism();
@@ -120,7 +117,7 @@ while (true) {
     !latestPolygonBlock
   ) {
     await new Promise((r) => setTimeout(r, 30_000));
-    continue;
+    return;
   }
 
   const fromBlock = lastIndexedBlock
@@ -190,28 +187,6 @@ while (true) {
   const polygonLogs = await getLiquidateEventPolygon(
     fromBlockPolygon,
     toBlockPolygon,
-  );
-
-  console.log(
-    `Fetched ${logs.length} logs from block ${fromBlock} to ${latestBlockMainnetNumber}`,
-  );
-  console.log(
-    `Fetched ${arbitrumLogs.length} logs from block ${fromBlockArbitrum} to ${latestArbitrumBlock}`,
-  );
-  console.log(
-    `Fetched ${optimismLogs.length} logs from block ${fromBlockOptimism} to ${latestOptimismBlock}`,
-  );
-  console.log(
-    `Fetched ${avalancheLogs.length} logs from block ${fromBlockAvalanche} to ${latestAvalancheBlock}`,
-  );
-  console.log(
-    `Fetched ${baseLogs.length} logs from block ${fromBlockBase} to ${latestBaseBlock}`,
-  );
-  console.log(
-    `Fetched ${lineaLogs.length} logs from block ${fromBlockLinea} to ${latestLineaBlock}`,
-  );
-  console.log(
-    `Fetched ${polygonLogs.length} logs from block ${fromBlockPolygon} to ${latestPolygonBlock}`,
   );
 
   lastIndexedBlock = toBlock;

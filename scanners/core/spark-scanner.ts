@@ -1,4 +1,3 @@
-import { formatUnits } from "viem";
 import { publicClient } from "../config/client.js";
 import { latestBlockMainnet } from "../utils/latest-block.ts";
 import { sparkLendPoolAddresses } from "./spark/addresses.ts";
@@ -16,12 +15,12 @@ async function getLiquidateEventMainnet(fromBlock: bigint, toBlock: bigint) {
   return mainnetLogs;
 }
 
-while (true) {
+export async function scanSparkOnce() {
   const latestBlockMainnetNumber = await latestBlockMainnet();
 
   if (!latestBlockMainnetNumber) {
     await new Promise((r) => setTimeout(r, 30_000));
-    continue;
+    return;
   }
 
   const fromBlock = lastIndexedBlock
@@ -33,9 +32,6 @@ while (true) {
       : latestBlockMainnetNumber;
 
   const logs = await getLiquidateEventMainnet(fromBlock, toBlock);
-  console.log(
-    `Fetched ${logs.length} logs from block ${fromBlock} to ${latestBlockMainnetNumber}`,
-  );
 
   lastIndexedBlock = toBlock;
   console.log(`Done. Sleeping 30 seconds...`);

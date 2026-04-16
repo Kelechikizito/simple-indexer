@@ -17,7 +17,6 @@ import {
   latestBlockBase,
   latestBlockLinea,
   latestBlockPolygon,
-  latestBlockZksync,
 } from "../utils/latest-block.ts";
 
 import {
@@ -109,7 +108,7 @@ async function getLiquidateEventPolygon(fromBlock: bigint, toBlock: bigint) {
   return polygonLogs;
 }
 
-while (true) {
+export async function scanCompoundOnce() {
   const latestBlockMainnetNumber = await latestBlockMainnet();
   const latestArbitrumBlock = await latestBlockArbitrum();
   const latestOptimismBlock = await latestBlockOptimism();
@@ -126,7 +125,7 @@ while (true) {
     !latestPolygonBlock
   ) {
     await new Promise((r) => setTimeout(r, 30_000));
-    continue;
+    return;
   }
 
   const fromBlock = lastIndexedBlock
@@ -148,6 +147,10 @@ while (true) {
     ? lastIndexedBlockPolygon + 1n
     : latestPolygonBlock - 5n;
 
+  const toBlock =
+    latestBlockMainnetNumber - fromBlock > 9n
+      ? fromBlock + 9n
+      : latestBlockMainnetNumber;
   const toBlockArbitrum =
     latestArbitrumBlock - fromBlockArbitrum > 9n
       ? fromBlockArbitrum + 9n
@@ -167,10 +170,7 @@ while (true) {
       ? fromBlockPolygon + 9n
       : latestPolygonBlock;
 
-  const logsMainnetUSDC = await getLiquidateEventMainnet(
-    fromBlock,
-    latestBlockMainnetNumber,
-  );
+  const logsMainnetUSDC = await getLiquidateEventMainnet(fromBlock, toBlock);
   const logsArbitrumUSDC = await getLiquidateEventArbitrum(
     fromBlockArbitrum,
     toBlockArbitrum,
@@ -189,32 +189,7 @@ while (true) {
     toBlockPolygon,
   );
 
-  console.log(
-    `Fetched ${logsMainnetUSDC.length} USDC logs from block ${fromBlock} to ${latestBlockMainnetNumber}`,
-  );
-  console.log(logsMainnetUSDC);
-  console.log(
-    `Fetched ${logsArbitrumUSDC.length} USDC logs from block ${fromBlockArbitrum} to ${toBlockArbitrum}`,
-  );
-  console.log(logsArbitrumUSDC);
-  console.log(
-    `Fetched ${logsOptimismUSDC.length} USDC logs from block ${fromBlockOptimism} to ${toBlockOptimism}`,
-  );
-  console.log(logsOptimismUSDC);
-  console.log(
-    `Fetched ${logsBaseUSDC.length} USDC logs from block ${fromBlockBase} to ${toBlockBase}`,
-  );
-  console.log(logsBaseUSDC);
-  console.log(
-    `Fetched ${logsLineaUSDC.length} USDC logs from block ${fromBlockLinea} to ${toBlockLinea}`,
-  );
-  console.log(logsLineaUSDC);
-  console.log(
-    `Fetched ${logsPolygonUSDC.length} USDC logs from block ${fromBlockPolygon} to ${toBlockPolygon}`,
-  );
-  console.log(logsPolygonUSDC);
-
-  lastIndexedBlock = latestBlockMainnetNumber;
+  lastIndexedBlock = toBlock;
   lastIndexedBlockArbitrum = toBlockArbitrum;
   lastIndexedBlockOptimism = toBlockOptimism;
   lastIndexedBlockBase = toBlockBase;

@@ -1,4 +1,3 @@
-import { formatUnits } from "viem";
 import {
   publicClient,
   publicClientArbitrum,
@@ -123,7 +122,7 @@ async function getLiquidateEventLogsZksync(fromBlock: bigint, toBlock: bigint) {
   return zksyncLogs;
 }
 
-while (true) {
+export async function scanAaveOnce() {
   const latestBlockMainnetNumber = await latestBlockMainnet();
   const latestArbitrumBlock = await latestBlockArbitrum();
   const latestOptimismBlock = await latestBlockOptimism();
@@ -144,7 +143,7 @@ while (true) {
     !latestZksyncBlock
   ) {
     await new Promise((r) => setTimeout(r, 10_000));
-    continue;
+    return;
   }
 
   const fromBlock = lastIndexedBlock
@@ -173,6 +172,10 @@ while (true) {
     : latestZksyncBlock - 3n;
 
   // clamp to max 9 blocks ahead
+  const toBlock =
+    latestBlockMainnetNumber - fromBlock > 9n
+      ? fromBlock + 9n
+      : latestBlockMainnetNumber;
   const toBlockArbitrum =
     latestArbitrumBlock - fromBlockArbitrum > 9n
       ? fromBlockArbitrum + 9n
@@ -200,7 +203,7 @@ while (true) {
       ? fromBlockZksync + 9n
       : latestZksyncBlock;
 
-  const logs = await getLiquidateEventLogs(fromBlock, latestBlockMainnetNumber);
+  const logs = await getLiquidateEventLogs(fromBlock, toBlock);
   const arbitrumLogs = await getLiquidateEventLogsArbitrum(
     fromBlockArbitrum,
     toBlockArbitrum,
@@ -227,32 +230,7 @@ while (true) {
     toBlockZksync,
   );
 
-  console.log(
-    `Fetched ${logs.length} logs from block ${fromBlock} to ${latestBlockMainnetNumber}`,
-  );
-  console.log(
-    `Fetched ${arbitrumLogs.length} logs from block ${fromBlockArbitrum} to ${latestArbitrumBlock}`,
-  );
-  console.log(
-    `Fetched ${optimismLogs.length} logs from block ${fromBlockOptimism} to ${latestOptimismBlock}`,
-  );
-  console.log(
-    `Fetched ${avalancheLogs.length} logs from block ${fromBlockAvalanche} to ${latestAvalancheBlock}`,
-  );
-  console.log(
-    `Fetched ${baseLogs.length} logs from block ${fromBlockBase} to ${latestBaseBlock}`,
-  );
-  console.log(
-    `Fetched ${lineaLogs.length} logs from block ${fromBlockLinea} to ${latestLineaBlock}`,
-  );
-  console.log(
-    `Fetched ${polygonLogs.length} logs from block ${fromBlockPolygon} to ${latestPolygonBlock}`,
-  );
-  console.log(
-    `Fetched ${zksyncLogs.length} logs from block ${fromBlockZksync} to ${latestZksyncBlock}`,
-  );
-
-  lastIndexedBlock = latestBlockMainnetNumber;
+  lastIndexedBlock = toBlock;
   lastIndexedBlockArbitrum = toBlockArbitrum;
   lastIndexedBlockOptimism = toBlockOptimism;
   lastIndexedBlockAvalanche = toBlockAvalanche;
