@@ -124,8 +124,15 @@ export async function scanCompoundOnce() {
     !latestLineaBlock ||
     !latestPolygonBlock
   ) {
-    await new Promise((r) => setTimeout(r, 30_000));
-    return;
+    return {
+      protocol: "compound",
+      mainnet: [],
+      arbitrum: [],
+      optimism: [],
+      base: [],
+      linea: [],
+      polygon: [],
+    };
   }
 
   const fromBlock = lastIndexedBlock
@@ -195,6 +202,14 @@ export async function scanCompoundOnce() {
   lastIndexedBlockBase = toBlockBase;
   lastIndexedBlockLinea = toBlockLinea;
   lastIndexedBlockPolygon = toBlockPolygon;
-  console.log(`Done. Sleeping 30 seconds...`);
-  await new Promise((r) => setTimeout(r, 30_000));
+
+  return {
+    protocol: "compound",
+    mainnet: logsMainnetUSDC,
+    arbitrum: logsArbitrumUSDC,
+    optimism: logsOptimismUSDC,
+    base: logsBaseUSDC,
+    linea: logsLineaUSDC,
+    polygon: logsPolygonUSDC,
+  };
 }

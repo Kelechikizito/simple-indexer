@@ -116,8 +116,16 @@ export async function scanMorphoOnce() {
     !latestLineaBlock ||
     !latestPolygonBlock
   ) {
-    await new Promise((r) => setTimeout(r, 30_000));
-    return;
+    return {
+      protocol: "morpho",
+      mainnet: [],
+      arbitrum: [],
+      optimism: [],
+      avalanche: [],
+      base: [],
+      linea: [],
+      polygon: [],
+    };
   }
 
   const fromBlock = lastIndexedBlock
@@ -197,6 +205,14 @@ export async function scanMorphoOnce() {
   lastIndexedBlockLinea = toBlockLinea;
   lastIndexedBlockPolygon = toBlockPolygon;
 
-  console.log(`Done. Sleeping 30 seconds...`);
-  await new Promise((r) => setTimeout(r, 30_000));
+  return {
+    protocol: "morpho",
+    mainnet: logs,
+    arbitrum: arbitrumLogs,
+    optimism: optimismLogs,
+    avalanche: avalancheLogs,
+    base: baseLogs,
+    linea: lineaLogs,
+    polygon: polygonLogs,
+  };
 }

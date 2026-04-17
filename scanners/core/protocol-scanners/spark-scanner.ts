@@ -19,8 +19,10 @@ export async function scanSparkOnce() {
   const latestBlockMainnetNumber = await latestBlockMainnet();
 
   if (!latestBlockMainnetNumber) {
-    await new Promise((r) => setTimeout(r, 30_000));
-    return;
+    return {
+      protocol: "spark",
+      mainnet: [],
+    };
   }
 
   const fromBlock = lastIndexedBlock
@@ -34,6 +36,9 @@ export async function scanSparkOnce() {
   const logs = await getLiquidateEventMainnet(fromBlock, toBlock);
 
   lastIndexedBlock = toBlock;
-  console.log(`Done. Sleeping 30 seconds...`);
-  await new Promise((r) => setTimeout(r, 30_000));
+
+  return {
+    protocol: "spark",
+    mainnet: logs,
+  };
 }

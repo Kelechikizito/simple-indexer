@@ -142,8 +142,17 @@ export async function scanAaveOnce() {
     !latestPolygonBlock ||
     !latestZksyncBlock
   ) {
-    await new Promise((r) => setTimeout(r, 10_000));
-    return;
+    return {
+      protocol: "aave",
+      mainnet: [],
+      arbitrum: [],
+      optimism: [],
+      avalanche: [],
+      base: [],
+      linea: [],
+      polygon: [],
+      zksync: [],
+    };
   }
 
   const fromBlock = lastIndexedBlock
@@ -239,6 +248,15 @@ export async function scanAaveOnce() {
   lastIndexedBlockPolygon = toBlockPolygon;
   lastIndexedBlockZksync = toBlockZksync;
 
-  console.log(`Done. Sleeping 30 seconds...`);
-  await new Promise((r) => setTimeout(r, 10_000));
+  return {
+    protocol: "aave",
+    mainnet: logs,
+    arbitrum: arbitrumLogs,
+    optimism: optimismLogs,
+    avalanche: avalancheLogs,
+    base: baseLogs,
+    linea: lineaLogs,
+    polygon: polygonLogs,
+    zksync: zksyncLogs,
+  };
 }
