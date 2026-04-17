@@ -120,9 +120,13 @@ async function unifiedScan() {
         }
       }
 
-      // TODO: Process/persist logs here
-      // Example: await persistLogs(allLogs);
-      // Example: await sendAlert(allLogs);
+      // Persist logs to database
+      if (allLogs.totalLogsCollected > 0) {
+        console.log(
+          `[${new Date().toISOString()}] Persisting ${allLogs.totalLogsCollected} logs to database...`,
+        );
+        await persistLogs(allLogs);
+      }
 
       console.log("All protocols scanned. Sleeping 30 seconds...");
       await new Promise((resolve) => setTimeout(resolve, 30000)); // Unified sleep
@@ -139,3 +143,130 @@ async function unifiedScan() {
 
 // Start the unified scanner
 unifiedScan().catch(console.error);
+
+/**
+ * Fetch the last indexed block for a specific protocol and network
+ */
+async function getLastIndexedBlock(protocol: string, network: string) {
+  const result = await sql`
+    select max(block_number) as last_block
+    from liquidation_events
+    where protocol = ${protocol}
+    and network = ${network}
+  `;
+  return result[0]?.last_block ? BigInt(result[0].last_block) : null;
+}
+
+/**
+ * Insert liquidation event logs into Postgres
+ */
+async function insertLiquidatedLogs({
+  protocol,
+  network,
+  blockNumber,
+  txHash,
+  logIndex,
+  blockTimestamp,
+  args,
+  argsDecimal,
+}: {
+  protocol: string;
+  network: string;
+  blockNumber: number;
+  txHash: string;
+  logIndex: number;
+  blockTimestamp: number;
+  args: Record<string, any>;
+  argsDecimal: Record<string, string>;
+}) {
+  const result = await sql`
+    insert into liquidation_events
+      (protocol, network, block_number, tx_hash, log_index, block_timestamp, args, args_decimal)
+    values
+      (${protocol}, ${network}, ${blockNumber}, ${txHash}, ${logIndex}, ${blockTimestamp}, ${JSON.stringify(args)}, ${JSON.stringify(argsDecimal)})
+    on conflict (tx_hash, log_index) do nothing
+    returning *
+  `;
+  return result;
+}
+
+/**
+ * Delete liquidation event logs (handles reorgs)
+ */
+async function deleteLiquidatedLogs(txHash: string, logIndex: number) {
+  await sql`
+    delete from liquidation_events
+    where tx_hash = ${txHash}
+    and log_index = ${logIndex}
+  `;
+  console.log(`[Reorg] Deleted event: tx: ${txHash} log: ${logIndex}`);
+}
+
+/**
+ * Process and persist logs from all protocols
+ */
+async function persistLogs(allLogs: AllProtocolLogs) {
+  const protocols = [
+    { name: "aave", logs: allLogs.aave },
+    { name: "compound", logs: allLogs.compound },
+    { name: "morpho", logs: allLogs.morpho },
+    { name: "spark", logs: allLogs.spark },
+  ];
+
+  for (const { name, logs } of protocols) {
+    if (!logs) continue;
+
+    const networks = [
+      { key: "mainnet", id: 1 },
+      { key: "arbitrum", id: 42161 },
+      { key: "optimism", id: 10 },
+      { key: "avalanche", id: 43114 },
+      { key: "base", id: 8453 },
+      { key: "linea", id: 59144 },
+      { key: "polygon", id: 137 },
+      { key: "zksync", id: 324 },
+    ];
+
+    for (const { key, id } of networks) {
+      const networkLogs = (logs as any)[key];
+      if (!networkLogs || networkLogs.length === 0) continue;
+
+      for (const log of networkLogs) {
+        if (log.removed) {
+          // Handle reorg: delete this log
+          await deleteLiquidatedLogs(log.transactionHash, log.logIndex);
+          continue;
+        }
+
+        try {
+          // Format numeric args using formatUnits (common liquidation event fields)
+          const argsDecimal: Record<string, string> = {};
+          if (log.args) {
+            for (const [key, value] of Object.entries(log.args)) {
+              if (typeof value === "bigint") {
+                argsDecimal[key] = formatUnits(value, 18); // Adjust decimals as needed per protocol
+              } else {
+                argsDecimal[key] = String(value);
+              }
+            }
+          }
+
+          await insertLiquidatedLogs({
+            protocol: name,
+            network: key,
+            blockNumber: Number(log.blockNumber),
+            txHash: log.transactionHash,
+            logIndex: log.logIndex,
+            blockTimestamp: Number(log.blockTimestamp),
+            args: log.args || {},
+            argsDecimal,
+          });
+        } catch (error) {
+          console.error(`Failed to insert ${name} log from ${key}:`, error);
+        }
+      }
+
+      console.log(`  [${name}/${key}] Persisted ${networkLogs.length} logs`);
+    }
+  }
+}
