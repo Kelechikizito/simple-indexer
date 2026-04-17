@@ -3,6 +3,7 @@ import { scanAaveOnce } from "./protocol-scanners/aave-scanner.ts";
 import { scanCompoundOnce } from "./protocol-scanners/compound-scanner.ts";
 import { scanMorphoOnce } from "./protocol-scanners/morpho-scanner.ts";
 import { scanSparkOnce } from "./protocol-scanners/spark-scanner.ts";
+import sql from "../backend/database/db.js";
 
 // Optional: Shared utilities or config
 // (e.g., import shared clients or error handlers)

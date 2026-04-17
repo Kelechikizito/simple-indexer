@@ -8,7 +8,7 @@ import {
   publicClientOptimism,
   publicClientPolygon,
   publicClientZksync,
-} from "../config/client.js";
+} from "../../config/client.js";
 import {
   latestBlockMainnet,
   latestBlockArbitrum,
@@ -17,7 +17,7 @@ import {
   latestBlockBase,
   latestBlockLinea,
   latestBlockPolygon,
-} from "../utils/latest-block.ts";
+} from "../../utils/latest-block.ts";
 
 import {
   compoundV3AddressesMainnet,
@@ -26,8 +26,8 @@ import {
   compoundV3AddressesBase,
   compoundV3AddressesLinea,
   compoundV3AddressesPolygon,
-} from "./compound-v3/addresses.ts";
-import { compoundV3LiquidationEventAbi } from "./liquidation-event-abi.ts";
+} from "../compound-v3/addresses.ts";
+import { compoundV3LiquidationEventAbi } from "../liquidation-event-abi.ts";
 
 let lastIndexedBlock: bigint | null = null;
 let lastIndexedBlockArbitrum: bigint | null = null;

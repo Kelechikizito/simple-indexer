@@ -1,7 +1,7 @@
-import { publicClient } from "../config/client.js";
-import { latestBlockMainnet } from "../utils/latest-block.ts";
-import { sparkLendPoolAddresses } from "./spark/addresses.ts";
-import { sparkLendLiquidationEventAbi } from "./liquidation-event-abi.ts";
+import { publicClient } from "../../config/client.js";
+import { latestBlockMainnet } from "../../utils/latest-block.ts";
+import { sparkLendPoolAddresses } from "../spark/addresses.ts";
+import { sparkLendLiquidationEventAbi } from "../liquidation-event-abi.ts";
 
 let lastIndexedBlock: bigint | null = null;
 

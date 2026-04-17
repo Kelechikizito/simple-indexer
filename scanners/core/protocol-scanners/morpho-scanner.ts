@@ -6,7 +6,7 @@ import {
   publicClientLinea,
   publicClientOptimism,
   publicClientPolygon,
-} from "../config/client.js";
+} from "../../config/client.js";
 import {
   latestBlockMainnet,
   latestBlockArbitrum,
@@ -15,10 +15,10 @@ import {
   latestBlockBase,
   latestBlockLinea,
   latestBlockPolygon,
-} from "../utils/latest-block.ts";
+} from "../../utils/latest-block.ts";
 
-import { morphoBlueAddresses } from "./morpho/addresses.ts";
-import { morphoLiquidationEventAbi } from "./liquidation-event-abi.ts";
+import { morphoBlueAddresses } from "../morpho/addresses.ts";
+import { morphoLiquidationEventAbi } from "../liquidation-event-abi.ts";
 
 let lastIndexedBlock: bigint | null = null;
 let lastIndexedBlockArbitrum: bigint | null = null;
