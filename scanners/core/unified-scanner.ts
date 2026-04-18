@@ -55,9 +55,10 @@ export function formatLogValues(logs: any[], decimals: number = 18): any[] {
  * Aggregate logs from all protocol scans
  */
 async function unifiedScan() {
+  console.log(`[${new Date().toISOString()}] Starting unified scanner...`);
   while (true) {
     try {
-      // Run scans sequentially to avoid overwhelming RPCs
+      // This step scans sequentially to avoid overwhelming RPCs
       const aaveLogs = await scanAaveOnce();
       const compoundLogs = await scanCompoundOnce();
       const morphoLogs = await scanMorphoOnce();
@@ -118,17 +119,19 @@ async function unifiedScan() {
         if (sparkLogs) {
           console.log(`  Spark - Mainnet: ${sparkLogs.mainnet?.length || 0}`);
         }
-      }
 
-      // Persist logs to database
-      if (allLogs.totalLogsCollected > 0) {
+        // Persist logs to database
         console.log(
           `[${new Date().toISOString()}] Persisting ${allLogs.totalLogsCollected} logs to database...`,
         );
         await persistLogs(allLogs);
+      } else {
+        console.log(
+          `[${new Date().toISOString()}] No liquidation events found. Sleeping 30 seconds...`,
+        );
       }
 
-      console.log("All protocols scanned. Sleeping 30 seconds...");
+      console.log("All protocols scanned.");
       await new Promise((resolve) => setTimeout(resolve, 30000)); // Unified sleep
     } catch (error) {
       console.error(

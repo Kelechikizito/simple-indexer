@@ -12,16 +12,16 @@ CREATE TABLE IF NOT EXISTS liquidation_events (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   
   -- Ensure uniqueness per transaction and log index
-  CONSTRAINT unique_tx_log UNIQUE (tx_hash, log_index),
-  
-  -- Create indexes for common queries
-  INDEX idx_protocol ON liquidation_events (protocol),
-  INDEX idx_network ON liquidation_events (network),
-  INDEX idx_protocol_network ON liquidation_events (protocol, network),
-  INDEX idx_block_number ON liquidation_events (block_number),
-  INDEX idx_block_timestamp ON liquidation_events (block_timestamp),
-  INDEX idx_tx_hash ON liquidation_events (tx_hash)
+  CONSTRAINT unique_tx_log UNIQUE (tx_hash, log_index)
 );
+
+-- Create indexes for common queries
+CREATE INDEX IF NOT EXISTS idx_protocol ON liquidation_events (protocol);
+CREATE INDEX IF NOT EXISTS idx_network ON liquidation_events (network);
+CREATE INDEX IF NOT EXISTS idx_protocol_network ON liquidation_events (protocol, network);
+CREATE INDEX IF NOT EXISTS idx_block_number ON liquidation_events (block_number);
+CREATE INDEX IF NOT EXISTS idx_block_timestamp ON liquidation_events (block_timestamp);
+CREATE INDEX IF NOT EXISTS idx_tx_hash ON liquidation_events (tx_hash);
 
 -- Optional: Track the last indexed block per protocol/network for resuming
 CREATE TABLE IF NOT EXISTS indexing_progress (
