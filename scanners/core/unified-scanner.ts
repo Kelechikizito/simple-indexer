@@ -242,13 +242,19 @@ async function persistLogs(allLogs: AllProtocolLogs) {
         }
 
         try {
-          // Format numeric args using formatUnits (common liquidation event fields)
+          // Convert args to serializable format (BigInt -> string)
+          const argsRaw: Record<string, any> = {};
           const argsDecimal: Record<string, string> = {};
+
           if (log.args) {
             for (const [key, value] of Object.entries(log.args)) {
               if (typeof value === "bigint") {
+                // Store raw value as string
+                argsRaw[key] = value.toString();
+                // Store formatted decimal
                 argsDecimal[key] = formatUnits(value, 18); // Adjust decimals as needed per protocol
               } else {
+                argsRaw[key] = String(value);
                 argsDecimal[key] = String(value);
               }
             }
@@ -261,7 +267,7 @@ async function persistLogs(allLogs: AllProtocolLogs) {
             txHash: log.transactionHash,
             logIndex: log.logIndex,
             blockTimestamp: Number(log.blockTimestamp),
-            args: log.args || {},
+            args: argsRaw,
             argsDecimal,
           });
         } catch (error) {
