@@ -6,6 +6,7 @@
     "axios": "^1.14.0",
     "dotenv": "^17.4.0",
     "hono": "^4.12.9",
+    "node-telegram-bot-api": "^0.67.0",
     "postgres": "^3.4.8",
     "ts-node": "^10.9.2",
     "viem": "^2.47.6",
