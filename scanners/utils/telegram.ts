@@ -5,15 +5,17 @@ const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN!, {
 });
 const CHAT_ID = process.env.TELEGRAM_CHAT_ID!;
 
-export async function sendLiquidationAlert(log: any, chain: string) {
-  const debtToCover = Number(log.args.debtToCover) / 1e6; // adjust for decimals
-
-  // only alert on high value liquidations
-  if (debtToCover < 10_000) return;
+export async function sendLiquidationAlert(
+  log: any,
+  chain: string,
+  protocol: string,
+) {
+  const debtToCover = Number(log.args.debtToCover) / 1e18;
 
   const message = `
 🚨 *Liquidation Alert*
 
+*Protocol:* ${protocol}
 *Chain:* ${chain}
 *Collateral:* \`${log.args.collateralAsset}\`
 *Debt Asset:* \`${log.args.debtAsset}\`

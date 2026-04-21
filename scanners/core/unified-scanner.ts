@@ -3,6 +3,7 @@ import { scanAaveOnce } from "./protocol-scanners/aave-scanner.ts";
 import { scanCompoundOnce } from "./protocol-scanners/compound-scanner.ts";
 import { scanMorphoOnce } from "./protocol-scanners/morpho-scanner.ts";
 import { scanSparkOnce } from "./protocol-scanners/spark-scanner.ts";
+import { sendLiquidationAlert } from "../utils/telegram.ts";
 import sql from "../backend/database/db.js";
 
 export interface AggregatedLogs {
@@ -193,6 +194,8 @@ async function insertLiquidatedLogs({
   return result;
 }
 
+// send telegram alert after successful insert
+
 /**
  * Delete liquidation event logs (handles reorgs)
  */
@@ -270,6 +273,7 @@ async function persistLogs(allLogs: AllProtocolLogs) {
             args: argsRaw,
             argsDecimal,
           });
+          await sendLiquidationAlert(log, key, name);
         } catch (error) {
           console.error(`Failed to insert ${name} log from ${key}:`, error);
         }
