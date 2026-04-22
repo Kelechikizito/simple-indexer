@@ -7,7 +7,7 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "ChainScan - Real-Time Blockchain Indexing",
+  title: "LiquidScan - Real-Time Blockchain Indexing",
   description:
     "Index Ethereum in real time. Track ERC-20 Transfer and Approval events on-chain with REST API.",
   generator: "v0.app",

@@ -17,7 +17,7 @@ export function Footer() {
             viewport={{ once: true }}
           >
             <h3 className="text-2xl font-bold text-white mb-2">
-              Chain
+              Liquid
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">
                 Scan
               </span>
@@ -86,7 +86,7 @@ export function Footer() {
             viewport={{ once: true }}
             className="text-gray-500 text-sm"
           >
-            © {new Date().getFullYear()} ChainScan. All rights reserved.
+            © {new Date().getFullYear()} LiquidScan. All rights reserved.
           </motion.p>
 
           {/* FiGithub CTA */}

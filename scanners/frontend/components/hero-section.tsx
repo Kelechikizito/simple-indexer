@@ -52,7 +52,7 @@ export function HeroSection() {
           variants={itemVariants}
           className="text-5xl md:text-7xl lg:text-8xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white via-blue-200 to-purple-300 mb-6 leading-tight"
         >
-          Index Ethereum.
+          Index DeFi Protocols.
           <br />
           In Real Time.
         </motion.h1>
@@ -102,8 +102,10 @@ export function HeroSection() {
         {/* FiGithub link */}
         <motion.a
           variants={itemVariants}
-          href="https://Github.com"
+          href="https://github.com/Kelechikizito/defi-liquidation-indexer"
           className="inline-flex items-center gap-2 text-gray-400 hover:text-blue-300 transition-colors group"
+          target="_blank"
+          rel="noopener noreferrer"
         >
           <FiGithub className="w-5 h-5" />
           <span>View on Github</span>
