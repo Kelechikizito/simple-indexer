@@ -18,6 +18,7 @@ const CHAINS = [
   "Polygon",
   "Avalanche",
   "Linea",
+  "ZkSync",
 ];
 
 export function Navbar({
