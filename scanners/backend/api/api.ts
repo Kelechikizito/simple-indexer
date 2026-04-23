@@ -5,14 +5,90 @@ import sql from "../database/db.js";
 
 const app = new Hono();
 
-app.use(
-  "/*",
-  cors({
-    origin: "http://localhost:3000",
-  }),
-);
+app.use("/*", cors({ origin: "http://localhost:3000" }));
 
-// get all liquidation events (with optional filters)
+const EXPLORERS: Record<string, string> = {
+  mainnet: "https://etherscan.io/tx",
+  arbitrum: "https://arbiscan.io/tx",
+  optimism: "https://optimistic.etherscan.io/tx",
+  base: "https://basescan.org/tx",
+  polygon: "https://polygonscan.com/tx",
+  avalanche: "https://snowtrace.io/tx",
+  linea: "https://lineascan.build/tx",
+  zksync: "https://explorer.zksync.io/tx",
+};
+
+function normalizeRow(row: any) {
+  const args =
+    typeof row.args === "string" ? JSON.parse(row.args) : (row.args ?? {});
+  const argsDecimal =
+    typeof row.args_decimal === "string"
+      ? JSON.parse(row.args_decimal)
+      : (row.args_decimal ?? {});
+
+  const explorerBase = EXPLORERS[row.network] ?? "https://etherscan.io/tx";
+
+  // map each protocol's field names to common names
+  const fieldMap: Record<string, any> = {
+    aave: {
+      borrower: args.user,
+      liquidator: args.liquidator,
+      collateralAsset: args.collateralAsset,
+      debtAsset: args.debtAsset,
+      debtRepaid: argsDecimal.debtToCover,
+      collateralSeized: argsDecimal.liquidatedCollateralAmount,
+      badDebt: "0",
+    },
+    morpho: {
+      borrower: args.borrower,
+      liquidator: args.caller,
+      collateralAsset: args.id ?? "Morpho Market",
+      debtAsset: "N/A",
+      debtRepaid: argsDecimal.repaidAssets,
+      collateralSeized: argsDecimal.seizedAssets,
+      badDebt: argsDecimal.badDebtAssets ?? "0",
+    },
+    compound: {
+      borrower: args.borrower,
+      liquidator: args.absorber,
+      collateralAsset: args.asset,
+      debtAsset: "Base Asset",
+      debtRepaid: argsDecimal.usdValue,
+      collateralSeized: argsDecimal.collateralAbsorbed,
+      badDebt: "0",
+    },
+    spark: {
+      borrower: args.user,
+      liquidator: args.liquidator,
+      collateralAsset: args.collateralAsset,
+      debtAsset: args.debtAsset,
+      debtRepaid: argsDecimal.debtToCover,
+      collateralSeized: argsDecimal.liquidatedCollateralAmount,
+      badDebt: "0",
+    },
+  };
+
+  const mapped = fieldMap[row.protocol] ?? {};
+
+  return {
+    id: String(row.id),
+    protocol: row.protocol,
+    network: row.network,
+    blockNumber: Number(row.block_number),
+    txHash: row.tx_hash,
+    timestamp: row.block_timestamp,
+    borrower: mapped.borrower ?? "unknown",
+    liquidator: mapped.liquidator ?? "unknown",
+    collateralAsset: mapped.collateralAsset ?? "N/A",
+    debtAsset: mapped.debtAsset ?? "N/A",
+    debtRepaid: mapped.debtRepaid ?? "0",
+    collateralSeized: mapped.collateralSeized ?? "0",
+    badDebt: mapped.badDebt ?? "0",
+    explorerUrl: `${explorerBase}/${row.tx_hash}`,
+    createdAt: row.created_at,
+  };
+}
+
 app.get("/api/liquidations", async (c) => {
   const protocol = c.req.query("protocol");
   const network = c.req.query("network");
@@ -27,20 +103,9 @@ app.get("/api/liquidations", async (c) => {
     limit ${limit}
   `;
 
-  return c.json(result);
+  return c.json(result.map(normalizeRow));
 });
 
-// get a single liquidation by tx hash
-app.get("/api/liquidations/:txHash", async (c) => {
-  const txHash = c.req.param("txHash").toLowerCase();
-  const result = await sql`
-    select * from liquidation_events
-    where tx_hash = ${txHash}
-  `;
-  return c.json(result[0] || null);
-});
-
-// get liquidations for a specific borrower
 app.get("/api/borrower/:address", async (c) => {
   const address = c.req.param("address").toLowerCase();
   const result = await sql`
@@ -50,10 +115,9 @@ app.get("/api/borrower/:address", async (c) => {
     order by block_number desc
     limit 50
   `;
-  return c.json(result);
+  return c.json(result.map(normalizeRow));
 });
 
-// get liquidations for a specific liquidator
 app.get("/api/liquidator/:address", async (c) => {
   const address = c.req.param("address").toLowerCase();
   const result = await sql`
@@ -63,10 +127,9 @@ app.get("/api/liquidator/:address", async (c) => {
     order by block_number desc
     limit 50
   `;
-  return c.json(result);
+  return c.json(result.map(normalizeRow));
 });
 
-// get summary stats
 app.get("/api/status", async (c) => {
   const result = await sql`
     select
@@ -80,13 +143,9 @@ app.get("/api/status", async (c) => {
   return c.json(result[0]);
 });
 
-// get stats broken down by protocol
 app.get("/api/stats/protocol", async (c) => {
   const result = await sql`
-    select
-      protocol,
-      count(*) as total_liquidations,
-      count(distinct network) as networks
+    select protocol, count(*) as total_liquidations
     from liquidation_events
     group by protocol
     order by total_liquidations desc
@@ -94,13 +153,9 @@ app.get("/api/stats/protocol", async (c) => {
   return c.json(result);
 });
 
-// get stats broken down by network
 app.get("/api/stats/network", async (c) => {
   const result = await sql`
-    select
-      network,
-      count(*) as total_liquidations,
-      count(distinct protocol) as protocols
+    select network, count(*) as total_liquidations
     from liquidation_events
     group by network
     order by total_liquidations desc
@@ -108,22 +163,13 @@ app.get("/api/stats/network", async (c) => {
   return c.json(result);
 });
 
-// get block number of liquidation
-app.get("/api/latest-block", async (c) => {
-  const protocol = c.req.query("protocol");
-  const network = c.req.query("network");
-
+app.get("/api/liquidations/:txHash", async (c) => {
+  const txHash = c.req.param("txHash").toLowerCase();
   const result = await sql`
-    select max(block_number) as latest_block
-    from liquidation_events
-    where 1=1
-    ${protocol ? sql`and protocol = ${protocol}` : sql``}
-    ${network ? sql`and network = ${network}` : sql``}
+    select tx_hash from liquidation_events
+    where tx_hash = ${txHash}
   `;
-
-  return c.json({
-    latest_block: result[0]?.latest_block ?? null,
-  });
+  return c.json(result[0] ? normalizeRow(result[0]) : null);
 });
 
 serve({ fetch: app.fetch, port: 3001 });

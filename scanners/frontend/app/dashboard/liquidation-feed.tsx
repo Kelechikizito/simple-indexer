@@ -150,7 +150,7 @@ export function LiquidationFeed({
                 <th className="px-6 py-3 text-left font-semibold text-gray-400">
                   Collateral → Debt
                 </th>
-                <th className="px-6 py-3 text-right font-semibold text-gray-400">
+                <th className="px-6 py-3 text-left font-semibold text-gray-400">
                   Amount
                 </th>
                 <th className="px-6 py-3 text-left font-semibold text-gray-400">
@@ -158,6 +158,9 @@ export function LiquidationFeed({
                 </th>
                 <th className="px-6 py-3 text-left font-semibold text-gray-400">
                   Protocol
+                </th>
+                <th className="px-6 py-3 text-left font-semibold text-gray-400">
+                  Explorer
                 </th>
               </tr>
             </thead>
@@ -189,7 +192,7 @@ export function LiquidationFeed({
                       {liq.collateralAsset || "N/A"} → {liq.debtAsset || "N/A"}
                     </td>
                     <td
-                      className={`px-6 py-4 text-right font-mono ${isLargeAmount ? "text-red-400" : "text-white"}`}
+                      className={`px-6 py-4 text-left font-mono ${isLargeAmount ? "text-red-400" : "text-white"}`}
                     >
                       ${(liq.collateralSeized / 1e6).toFixed(2)}M
                     </td>
@@ -216,6 +219,17 @@ export function LiquidationFeed({
                           )}
                         </div>
                       </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <a
+                        href={liq.explorerUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="text-xs text-cyan-400 hover:text-cyan-300 underline"
+                      >
+                        View Tx ↗
+                      </a>
                     </td>
                   </motion.tr>
                 );
