@@ -91,7 +91,7 @@ export function Footer() {
 
           {/* FiGithub CTA */}
           <motion.a
-            href="https://Github.com"
+            href="https://github.com/Kelechikizito/defi-liquidation-indexer"
             target="_blank"
             rel="noopener noreferrer"
             initial={{ opacity: 0, x: 20 }}

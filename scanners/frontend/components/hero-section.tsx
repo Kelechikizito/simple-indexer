@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { FiGithub } from "react-icons/fi";
+import Link from "next/link";
 
 export function HeroSection() {
   const containerVariants = {
@@ -62,8 +63,8 @@ export function HeroSection() {
           variants={itemVariants}
           className="text-lg md:text-xl text-gray-300 mb-8 max-w-2xl mx-auto leading-relaxed"
         >
-          Track ERC-20 Transfer and Approval events on-chain. Real-time
-          indexing, REST API ready, and reorg protected for Web3 developers.
+          Track DeFi Liquidation events on-chain. Real-time indexing, and reorg
+          protected for Web3 developers.
         </motion.p>
 
         {/* CTA Buttons */}
@@ -72,22 +73,24 @@ export function HeroSection() {
           className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12"
         >
           {/* Launch App Button - Most Prominent */}
-          <motion.button
-            animate={buttonPulse}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-            className="px-8 py-4 rounded-lg font-semibold text-lg bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg hover:shadow-xl hover:from-blue-600 hover:to-purple-600 transition-all border-2 border-transparent hover:border-blue-300 relative overflow-hidden group"
-          >
-            <span className="relative z-10 flex items-center gap-2">
-              Launch App
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </span>
-            {/* Glow effect */}
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-400 opacity-0 group-hover:opacity-30 transition-opacity rounded-lg blur" />
-          </motion.button>
+          <Link href="/dashboard">
+            <motion.button
+              animate={buttonPulse}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+              className="px-8 py-4 rounded-lg font-semibold text-lg bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg hover:shadow-xl hover:from-blue-600 hover:to-purple-600 transition-all border-2 border-transparent hover:border-blue-300 relative overflow-hidden group"
+            >
+              <span className="relative z-10 flex items-center gap-2">
+                Launch App
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </span>
+              {/* Glow effect */}
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-400 opacity-0 group-hover:opacity-30 transition-opacity rounded-lg blur" />
+            </motion.button>
+          </Link>
 
           {/* Docs Button */}
           <motion.button
