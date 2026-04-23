@@ -11,7 +11,7 @@ interface NavbarProps {
 
 const CHAINS = [
   "All chains",
-  "Ethereum",
+  "Mainnet",
   "Arbitrum",
   "Base",
   "Optimism",
