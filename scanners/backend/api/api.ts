@@ -106,6 +106,15 @@ app.get("/api/liquidations", async (c) => {
   return c.json(result.map(normalizeRow));
 });
 
+app.get("/api/liquidations/:txHash", async (c) => {
+  const txHash = c.req.param("txHash").toLowerCase();
+  const result = await sql`
+    select * from liquidation_events
+    where tx_hash = ${txHash}
+  `;
+  return c.json(result[0] ? normalizeRow(result[0]) : null);
+});
+
 app.get("/api/borrower/:address", async (c) => {
   const address = c.req.param("address").toLowerCase();
   const result = await sql`
@@ -161,15 +170,6 @@ app.get("/api/stats/network", async (c) => {
     order by total_liquidations desc
   `;
   return c.json(result);
-});
-
-app.get("/api/liquidations/:txHash", async (c) => {
-  const txHash = c.req.param("txHash").toLowerCase();
-  const result = await sql`
-    select tx_hash from liquidation_events
-    where tx_hash = ${txHash}
-  `;
-  return c.json(result[0] ? normalizeRow(result[0]) : null);
 });
 
 serve({ fetch: app.fetch, port: 3001 });
