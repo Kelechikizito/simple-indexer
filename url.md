@@ -6,3 +6,5 @@ how can i use a websocket and alchemy rpc-url at the same time?
 
 - Get all the contract address for the protocols for all networks and put it in a `.ts` or `.json` file.
 - Upper bound to detect whales?
+- Store Chat.IDS
+- Telegram bot in landing page.
