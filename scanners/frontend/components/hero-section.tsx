@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { FiGithub } from "react-icons/fi";
+import { FaTelegram } from "react-icons/fa";
 import Link from "next/link";
 
 export function HeroSection() {
@@ -93,13 +94,17 @@ export function HeroSection() {
           </Link>
 
           {/* Docs Button */}
-          <motion.button
+          <motion.a
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="px-8 py-4 rounded-lg font-semibold text-lg border-2 border-gray-600 text-gray-200 hover:border-blue-500 hover:text-blue-300 transition-all"
+            className="px-8 py-4 rounded-lg font-semibold text-lg border-2 border-gray-600 text-gray-200 hover:border-blue-500 hover:text-blue-300 transition-all flex items-center gap-2"
+            href="https://t.me/KayKayDLI_bot"
+            target="_blank"
+            rel="noopener noreferrer"
           >
-            View Docs
-          </motion.button>
+            <FaTelegram className="w-5 h-5" />
+            <span>Telegram Bot</span>
+          </motion.a>
         </motion.div>
 
         {/* FiGithub link */}

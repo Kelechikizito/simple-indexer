@@ -33,16 +33,19 @@ export default function DashboardPage() {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const res = await fetch("http://localhost:3001/api/liquidations");
+        const res = await fetch(
+          "http://localhost:3001/api/liquidations?limit=200",
+        );
         const data = await res.json();
+        console.log("API response sample:", data[0]); // add this to debug
         setLiquidations(data);
         if (data.length > 0) {
           setLatestBlock(
-            Math.max(...data.map((l: Liquidation) => l.blockNumber)),
+            Math.max(...data.map((l: any) => Number(l.blockNumber))),
           );
         }
       } catch (err) {
-        console.error("Failed to fetch liquidations:", err);
+        console.error("Failed to fetch:", err);
       } finally {
         setIsLoading(false);
       }

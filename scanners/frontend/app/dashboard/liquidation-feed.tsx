@@ -12,8 +12,8 @@ interface Liquidation {
   timestamp: string;
   borrower: string;
   liquidator: string;
-  debtRepaid: number;
-  collateralSeized: number;
+  debtRepaid: string; // string not number
+  collateralSeized: string; // string not number
   badDebt?: string;
   explorerUrl: string;
   collateralAsset?: string;
@@ -170,7 +170,8 @@ export function LiquidationFeed({
                   bg: "bg-gray-500/20",
                   text: "text-gray-400",
                 };
-                const isLargeAmount = liq.collateralSeized > 10000;
+                const collateralValue = Number(liq.collateralSeized);
+                const isLargeAmount = collateralValue > 1;
                 const isBadDebt = liq.badDebt && liq.badDebt !== "0";
 
                 return (
@@ -189,13 +190,17 @@ export function LiquidationFeed({
                       {truncateAddress(liq.borrower)}
                     </td>
                     <td className="px-6 py-4 text-gray-300">
-                      {liq.collateralAsset || "N/A"} → {liq.debtAsset || "N/A"}
+                      {truncateAddress(liq.collateralAsset || "N/A")} →{" "}
+                      {truncateAddress(liq.debtAsset || "N/A")}
                     </td>
                     <td
                       className={`px-6 py-4 text-left font-mono ${isLargeAmount ? "text-red-400" : "text-white"}`}
                     >
-                      ${(liq.collateralSeized / 1e6).toFixed(2)}M
+                      {collateralValue < 0.000001
+                        ? collateralValue.toExponential(4)
+                        : collateralValue.toFixed(6)}
                     </td>
+
                     <td className="px-6 py-4 font-mono text-gray-300">
                       {truncateAddress(liq.liquidator)}
                     </td>
