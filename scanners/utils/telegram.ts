@@ -1,43 +1,13 @@
 import TelegramBot from "node-telegram-bot-api";
 import * as dotenv from "dotenv";
-import fs from "fs";
+import sql from "../backend/database/db.js";
 
 dotenv.config();
 
 const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN!, {
-  polling: true,
+  polling: true, // enabled to receive messages
 });
 
-// ====== USER STORAGE ======
-const USERS_FILE = "./users.json";
-
-function loadUsers(): number[] {
-  try {
-    return JSON.parse(fs.readFileSync(USERS_FILE, "utf-8"));
-  } catch {
-    return [];
-  }
-}
-
-function saveUsers(users: number[]) {
-  fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
-}
-
-// Load users into memory
-let users = new Set<number>(loadUsers());
-
-// ====== CAPTURE USERS ======
-bot.on("message", (msg) => {
-  const chatId = msg.chat.id;
-
-  if (!users.has(chatId)) {
-    users.add(chatId);
-    saveUsers([...users]);
-    console.log("Saved new user:", chatId);
-  }
-});
-
-// ====== EXPLORERS ======
 const EXPLORERS: Record<string, string> = {
   mainnet: "https://etherscan.io/tx",
   arbitrum: "https://arbiscan.io/tx",
@@ -49,19 +19,65 @@ const EXPLORERS: Record<string, string> = {
   zksync: "https://explorer.zksync.io/tx",
 };
 
-// ====== ALERT FUNCTION ======
+// load all subscribers from postgres
+async function getSubscribers(): Promise<string[]> {
+  const result = await sql`select chat_id from telegram_subscribers`;
+  return result.map((row) => row.chat_id);
+}
+
+// add a subscriber to postgres
+async function addSubscriber(chatId: string): Promise<void> {
+  await sql`
+    insert into telegram_subscribers (chat_id)
+    values (${chatId})
+    on conflict (chat_id) do nothing
+  `;
+}
+
+// remove a subscriber from postgres
+async function removeSubscriber(chatId: string): Promise<void> {
+  await sql`
+    delete from telegram_subscribers
+    where chat_id = ${chatId}
+  `;
+}
+
+// /start — subscribe
+bot.onText(/\/start/, async (msg) => {
+  const chatId = String(msg.chat.id);
+  await addSubscriber(chatId);
+  bot.sendMessage(
+    chatId,
+    "✅ You're subscribed to LiquidScan alerts!\n\nYou'll receive real-time notifications whenever a liquidation is detected across Aave, Compound, Morpho and Spark.\n\nSend /stop to unsubscribe.",
+  );
+});
+
+// /stop — unsubscribe
+bot.onText(/\/stop/, async (msg) => {
+  const chatId = String(msg.chat.id);
+  await removeSubscriber(chatId);
+  bot.sendMessage(
+    chatId,
+    "❌ You've been unsubscribed from LiquidScan alerts.",
+  );
+});
+
+// /status — show subscriber count
+bot.onText(/\/status/, async (msg) => {
+  const chatId = String(msg.chat.id);
+  const subscribers = await getSubscribers();
+  bot.sendMessage(
+    chatId,
+    `📊 LiquidScan has ${subscribers.length} active subscribers.`,
+  );
+});
+
+// send alert to all subscribers
 export async function sendLiquidationAlert(
   log: any,
   chain: string,
   protocol: string,
 ) {
-  const allUsers = loadUsers(); // ALWAYS fresh load
-
-  if (allUsers.length === 0) {
-    console.log("No users to notify.");
-    return;
-  }
-
   const debtToCover = Number(log.args.debtToCover) / 1e18;
   const explorerBase = EXPLORERS[chain] ?? "https://etherscan.io/tx";
   const txUrl = `${explorerBase}/${log.transactionHash}`;
@@ -80,32 +96,22 @@ export async function sendLiquidationAlert(
 *Tx:* [View on Explorer](${txUrl})
   `.trim();
 
-  for (const chatId of allUsers) {
-    try {
-      await bot.sendMessage(chatId, message, { parse_mode: "Markdown" });
-    } catch (err) {
-      console.error(`Failed to send to ${chatId}`, err);
-    }
+  const subscribers = await getSubscribers();
+
+  if (subscribers.length === 0) {
+    console.log("[Telegram] No subscribers to notify.");
+    return;
   }
+
+  await Promise.all(
+    subscribers.map((chatId) =>
+      bot
+        .sendMessage(chatId, message, { parse_mode: "Markdown" })
+        .catch((err) =>
+          console.error(`[Telegram] Failed to send to ${chatId}:`, err.message),
+        ),
+    ),
+  );
+
+  console.log(`[Telegram] Alert sent to ${subscribers.length} subscribers.`);
 }
-
-bot.onText(/\/test/, async (msg) => {
-  const chatId = msg.chat.id;
-
-  const fakeLog = {
-    args: {
-      collateralAsset: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
-      debtAsset: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
-      user: "0xabc...123",
-      debtToCover: 1000000000000000000n,
-      liquidator: "0xdef...456",
-    },
-    transactionHash:
-      "0x4e3a3754410177e6937ef1f84bba68ea139e8d1a2bab7c8a6f6f7a5b8e9d7c3b",
-    blockNumber: 24000000n,
-  };
-
-  await sendLiquidationAlert(fakeLog, "mainnet", "aave");
-
-  bot.sendMessage(chatId, "✅ Test alert sent to all users");
-});
