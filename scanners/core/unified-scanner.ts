@@ -4,6 +4,7 @@ import { scanCompoundOnce } from "./protocol-scanners/compound-scanner.ts";
 import { scanMorphoOnce } from "./protocol-scanners/morpho-scanner.ts";
 import { scanSparkOnce } from "./protocol-scanners/spark-scanner.ts";
 import { sendLiquidationAlert } from "../utils/telegram.ts";
+import { resolveTokenSymbol } from "../utils/token-lookup/index.ts";
 import sql from "../backend/database/db.js";
 
 export interface AggregatedLogs {
@@ -263,6 +264,18 @@ async function persistLogs(allLogs: AllProtocolLogs) {
             }
           }
 
+          // resolve token symbols based on protocol
+          const collateralAddress =
+            log.args?.collateralAsset || log.args?.asset || "";
+          const debtAddress = log.args?.debtAsset || "";
+
+          const collateralSymbol = resolveTokenSymbol(collateralAddress, key);
+          const debtSymbol = resolveTokenSymbol(debtAddress, key);
+
+          // add symbols to argsRaw so they're stored in the database
+          argsRaw["collateralSymbol"] = collateralSymbol;
+          argsRaw["debtSymbol"] = debtSymbol;
+
           await insertLiquidatedLogs({
             protocol: name,
             network: key,
@@ -273,7 +286,13 @@ async function persistLogs(allLogs: AllProtocolLogs) {
             args: argsRaw,
             argsDecimal,
           });
-          await sendLiquidationAlert(log, key, name);
+          await sendLiquidationAlert(
+            log,
+            key,
+            name,
+            collateralSymbol,
+            debtSymbol,
+          );
         } catch (error) {
           console.error(`Failed to insert ${name} log from ${key}:`, error);
         }

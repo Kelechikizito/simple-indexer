@@ -77,6 +77,8 @@ export async function sendLiquidationAlert(
   log: any,
   chain: string,
   protocol: string,
+  collateralSymbol: string = "Unknown",
+  debtSymbol: string = "Unknown",
 ) {
   const debtToCover = Number(log.args.debtToCover) / 1e18;
   const explorerBase = EXPLORERS[chain] ?? "https://etherscan.io/tx";
@@ -87,11 +89,11 @@ export async function sendLiquidationAlert(
 
 *Protocol:* ${protocol}
 *Chain:* ${chain}
-*Collateral:* \`${log.args.collateralAsset}\`
-*Debt Asset:* \`${log.args.debtAsset}\`
-*Borrower:* \`${log.args.user}\`
+*Collateral:* ${collateralSymbol} \`${log.args.collateralAsset?.slice(0, 8)}...\`
+*Debt Asset:* ${debtSymbol} \`${log.args.debtAsset?.slice(0, 8)}...\`
+*Borrower:* \`${log.args.user || log.args.borrower}\`
 *Debt Covered:* $${debtToCover.toLocaleString()}
-*Liquidator:* \`${log.args.liquidator}\`
+*Liquidator:* \`${log.args.liquidator || log.args.caller}\`
 *Block:* ${log.blockNumber}
 *Tx:* [View on Explorer](${txUrl})
   `.trim();

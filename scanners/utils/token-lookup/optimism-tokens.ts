@@ -1,0 +1,12 @@
+export const optimismTokens: Record<string, string> = {
+  "0x4200000000000000000000000000000000000006": "WETH",
+  "0x0b2c639c533813f4aa9d7837caf62653d097ff85": "USDC",
+  "0x7f5c764cbc14f9669b88837ca1490cca17c31607": "USDC.e",
+  "0x94b008aa00579c1307b0ef2c499ad98a8ce58e58": "USDT",
+  "0xda10009cbd5d07dd0cecc66161fc93d7c9000da1": "DAI",
+  "0x68f180fcce6836688e9084f035309e29bf0a2095": "WBTC",
+  "0x1f32b1c2345538c0c6f582fcb022739c4a194ebb": "wstETH",
+  "0x9bcef72be871e61ed4fbbc7630889bee758eb81d": "rETH",
+  "0x76fb31fb4af56892a25e32cfc43de717950c9278": "AAVE",
+  "0x350a791bfc2c21f9ed5d10980dad2e2638ffa7f6": "LINK",
+};

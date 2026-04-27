@@ -196,11 +196,8 @@ export function LiquidationFeed({
                     <td
                       className={`px-6 py-4 text-left font-mono ${isLargeAmount ? "text-red-400" : "text-white"}`}
                     >
-                      {collateralValue < 0.000001
-                        ? collateralValue.toExponential(4)
-                        : collateralValue.toFixed(6)}
+                      ${Number(liq.collateralSeized).toFixed(6)}
                     </td>
-
                     <td className="px-6 py-4 font-mono text-gray-300">
                       {truncateAddress(liq.liquidator)}
                     </td>
