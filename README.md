@@ -1,243 +1,253 @@
-- Aave V3
-- Compound v3
-- Morpho
-- SparkLend
+# DeFi Liquidation Indexer
 
-- Real-time Notifications: Integrated Telegram bot to alert on high-value transactions (whales).
+> **A high-performance, real-time indexer for DeFi liquidation events across 8 EVM networks**
 
-# Defi-Liquidation-Indexer
+The DeFi Liquidation Indexer monitors and indexes on-chain liquidation events from the major DeFi lending protocols — Aave V3, Compound V3, Morpho, and Spark — across 8 EVM networks. It provides a unified REST API, a real-time dashboard, and a Telegram alert bot for instant liquidation notifications.
 
-> _A high-performance, real-time indexer for DeFi liquidation events across EVM Networks._
+🤖 **Telegram Bot:** [@KayKayDLI_bot](https://t.me/KayKayDLI_bot) — Subscribe to receive real-time liquidation alerts
 
-Defi Liquidation Indexer monitors Aave V3, Compound V3, Morpho, and SparkLend protocols with sub-second processing and real-time notifications. The indexer listen to all liquidation events across 8 networks
+---
 
 ## Key Features
 
-- **Unified Event Pipeline** — Discover active addresses and track ERC20 approvals from Transfer + Approval events in a single `eth_getLogs` call
-- **11 EVM Networks** — Ethereum, BSC, Polygon, Arbitrum, Optimism, Base, Avalanche, Gnosis, Linea, Scroll, Mantle
-- **Adaptive Batching** — Dynamic batch sizing based on log density and response time
-- **Contract Verification** — Etherscan API integration for source code verification
-- **REST API** — Filter addresses, query approvals, view network statistics
+- **Multi-Protocol Indexing** — Tracks liquidation events across Aave V3, Compound V3, Morpho, and Spark in a unified pipeline
+- **8 EVM Networks** — Ethereum, Arbitrum, Base, Optimism, Polygon, Avalanche, Linea, zkSync
+- **Unified Normalizer** — Protocol-agnostic normalization layer that maps different event field names (e.g. `user` vs `borrower`, `caller` vs `liquidator`) into a consistent data shape
+- **Real-Time Telegram Alerts** — [@KayKayDLI_bot](https://t.me/KayKayDLI_bot) broadcasts liquidation alerts to all subscribers the moment an event is detected. Anyone can subscribe with `/start`
+- **Reorg Handling** — Detects and rolls back `removed: true` logs to keep indexed data accurate
+- **REST API** — Hono-powered API serving normalized liquidation data with filtering by protocol and network
+- **Live Dashboard** — Next.js frontend with real-time liquidation feed, metrics cards, and per-chain block tracking
+- **PostgreSQL Persistence** — All liquidation events persisted with full args, decimal-formatted values, and explorer URLs
+
+---
 
 ## Architecture
 
 ```
-BugChainIndexer/
-├── scanners/                       # Core analysis engine
-│   ├── core/
-│   │   ├── UnifiedScanner.js            # Transfer + Approval event pipeline
-│   │   ├── ParallelRunner.js            # Multi-network parallel executor
-│   │   ├── FundUpdater.js              # Balance/TVL tracker
-│   │   └── DataRevalidator.js          # Data consistency validation
-│   ├── common/
-│   │   ├── core.js                      # Constants, RPC, Etherscan API
-│   │   ├── database.js                  # PostgreSQL (addresses, approvals)
-│   │   ├── Scanner.js                   # Base scanner class
-│   │   ├── LogFetcher.js               # Adaptive eth_getLogs
-│   │   ├── EOAFilter.js                # EOA vs Contract classification
-│   │   ├── ContractVerifier.js         # Etherscan verification
-│   │   └── alchemyRpc.js              # Alchemy RPC client
+DEFI-LIQUIDATION-INDEXER/
+├── scanners/
+│   ├── backend/
+│   │   ├── api/
+│   │   │   └── api.ts                  # Hono REST API server
+│   │   ├── database/
+│   │   │   ├── db.js                   # postgres.js connection
+│   │   │   └── schema.sql              # All table definitions
 │   ├── config/
-│   │   └── networks.js                  # 11 network configurations
-│   ├── cron/                            # Automation scripts
-│   └── run.sh                           # Main executor
-├── server/
-│   └── backend/                    # REST API
-│       ├── routes/public.js             # /api endpoints
-│       ├── controllers/                 # Request handlers
-│       └── services/                    # DB query logic
-└── docs/
+│   │   └── client.ts                   # viem public clients per network
+│   ├── core/
+│   │   ├── aave-v3/
+│   │   │   └── pool-addresses.ts       # Aave V3 Pool addresses per chain
+│   │   ├── compound-v3/
+│   │   │   └── addresses.ts            # Compound V3 Comet addresses per market
+│   │   ├── morpho/
+│   │   │   └── addresses.ts            # Morpho Blue contract addresses
+│   │   ├── spark/
+│   │   │   └── addresses.ts            # SparkLend Pool addresses
+│   │   ├── protocol-scanners/
+│   │   │   ├── aave-scanner.ts         # Aave V3 getLogs handler
+│   │   │   ├── compound-scanner.ts     # Compound V3 getLogs handler
+│   │   │   ├── morpho-scanner.ts       # Morpho getLogs handler
+│   │   │   └── spark-scanner.ts        # Spark getLogs handler
+│   │   ├── liquidation-event-abi.ts    # ABI definitions for all liquidation events
+│   │   └── unified-scanner.ts          # Main loop — aggregates all protocols
+│   ├── frontend/                        # Next.js dashboard
+│   ├── utils/
+│   │   ├── token-lookup/               # Per-network token address → symbol maps
+│   │   ├── latest-block.ts             # Fetches latest block per network
+│   │   └── telegram.ts                 # Telegram bot — alerts + /start /stop
+│   └── package.json
 ```
+
+### How It Works
+
+```
+unified-scanner.ts (every 30s)
+  ├── scanAaveOnce()     → eth_getLogs on Aave V3 Pool (8 networks)
+  ├── scanCompoundOnce() → eth_getLogs on Compound V3 Comet markets
+  ├── scanMorphoOnce()   → eth_getLogs on Morpho Blue (multi-network)
+  └── scanSparkOnce()    → eth_getLogs on SparkLend Pool (mainnet)
+        ↓
+  normalizeRow()         → maps protocol-specific fields to common shape
+        ↓
+  persistLogs()          → INSERT into liquidation_events (ON CONFLICT DO NOTHING)
+        ↓
+  sendLiquidationAlert() → broadcasts to all Telegram subscribers
+```
+
+---
+
+## Supported Protocols & Networks
+
+| Protocol    | Mainnet | Arbitrum | Base | Optimism | Polygon | Avalanche | Linea | zkSync |
+| ----------- | ------- | -------- | ---- | -------- | ------- | --------- | ----- | ------ |
+| Aave V3     | ✅      | ✅       | ✅   | ✅       | ✅      | ✅        | ✅    | ✅     |
+| Compound V3 | ✅      | ✅       | ✅   | ✅       | ✅      | ❌        | ✅    | ❌     |
+| Morpho      | ✅      | ✅       | ✅   | ✅       | ✅      | ✅        | ✅    | ❌     |
+| Spark       | ✅      | ❌       | ❌   | ❌       | ❌      | ❌        | ❌    | ❌     |
+
+---
 
 ## Quick Start
 
 ### Prerequisites
 
-- Node.js v16+ (v18+ recommended)
-- PostgreSQL 12+
-- Alchemy API key
-- Etherscan API keys (4 recommended)
+- Node.js (latest LTS)
+- PostgreSQL 14+
+- Alchemy API keys (one per network)
+- Telegram Bot Token from [@BotFather](https://t.me/BotFather)
 
 ### Setup
 
 ```bash
-# Install scanner dependencies
-cd scanners && npm install
+# Clone the repo
+git clone https://github.com/your-username/defi-liquidation-indexer
+cd defi-liquidation-indexer/scanners
+
+# Install dependencies
+npm install
 
 # Configure environment
 cp .env.example .env
-# Edit .env with your credentials
-
-# Install backend dependencies
-cd ../server/backend && npm install
+# Fill in your API keys
 ```
 
-### Required Environment Variables
+### Environment Variables
 
 ```bash
-# Database
-PGHOST=localhost
-PGPORT=5432
-PGDATABASE=bugchain_indexer
-PGUSER=postgres
-PGPASSWORD=your_password
+# Alchemy RPC keys — one per network
+ETH_MAINNET_API_KEY=https://eth-mainnet.g.alchemy.com/v2/YOUR_KEY
+ARBITRUM_MAINNET_API_KEY=https://arb-mainnet.g.alchemy.com/v2/YOUR_KEY
+OPTIMISM_MAINNET_API_KEY=https://opt-mainnet.g.alchemy.com/v2/YOUR_KEY
+BASE_MAINNET_API_KEY=https://base-mainnet.g.alchemy.com/v2/YOUR_KEY
+ZKSYNC_MAINNET_API_KEY=https://zksync-mainnet.g.alchemy.com/v2/YOUR_KEY
+AVALANCHE_MAINNET_API_KEY=https://avax-mainnet.g.alchemy.com/v2/YOUR_KEY
+LINEA_MAINNET_API_KEY=https://linea-mainnet.g.alchemy.com/v2/YOUR_KEY
+POLYGON_MAINNET_API_KEY=https://polygon-mainnet.g.alchemy.com/v2/YOUR_KEY
 
-# API Keys
-ALCHEMY_API_KEY=your_alchemy_key
-DEFAULT_ETHERSCAN_KEYS=key1,key2,key3,key4
+# Etherscan (for contract verification)
+ETHERSCAN_API_KEY=your_etherscan_key
+
+# Telegram bot
+TELEGRAM_BOT_TOKEN=your_bot_token
+# TELEGRAM_CHAT_ID is not required — the bot uses dynamic subscriber management
+# Anyone can subscribe by sending /start to @KayKayDLI_bot
 ```
 
-### Run Scanners
+### Database Setup
 
 ```bash
-cd scanners
+# Create the database
+psql postgres -c 'CREATE DATABASE defi_liquidation_indexer'
 
-# Address discovery + Approval tracking (Transfer + Approval events)
-./run.sh unified
-
-# Update asset balances
-./run.sh funds
-
-# Single network
-NETWORK=ethereum ./run.sh unified
-
-# All networks in parallel
-./run.sh unified parallel
+# Run the schema
+psql defi_liquidation_indexer -f scanners/backend/database/schema.sql
 ```
 
-### Start API Server
+---
+
+## Running the Project
+
+Each of these runs in a separate terminal:
 
 ```bash
-cd server/backend
-npm start
+# 1. Start the unified scanner (also starts the Telegram bot listener)
+cd scanners/core
+npx tsx unified-scanner.ts
+
+# 2. Start the REST API
+cd scanners/backend/api
+npx tsx api.ts
+
+# 3. Start the frontend dashboard
+cd scanners/frontend
+npm run dev
 ```
 
-## Pipelines
+> The Telegram bot listener starts automatically when the unified scanner runs. No separate process needed.
 
-### UnifiedScanner — Address Discovery + Approval Tracking
+To prevent your machine from sleeping while the scanner runs:
 
-```
-eth_getLogs (Transfer + Approval events, single request)
-  ├─ Transfer logs:
-  │   → Extract addresses (token contract, from, to)
-  │   → Skip known addresses
-  │   → EOA vs Contract classification
-  │   → Contract verification (Etherscan)
-  │   → Store in addresses table
-  └─ Approval logs:
-      → Parse owner, spender, token, value
-      → Store in approvals table (upsert by PK)
+```bash
+caffeinate -i npx tsx core/unified-scanner.ts
 ```
 
-### FundUpdater — Balance Tracking
+---
 
-Uses BalanceHelper contracts for batch balance queries (native + ERC20).
-Calculates USD portfolio value with token price caching.
+## Telegram Bot
 
-### DataRevalidator — Data Consistency
+[@KayKayDLI_bot](https://t.me/KayKayDLI_bot) sends real-time liquidation alerts to subscribers.
 
-Reclassifies addresses with incomplete data (missing tags, code_hash, deployed time).
-Fetches contract names from Etherscan for unverified contracts.
+| Command   | Action                          |
+| --------- | ------------------------------- |
+| `/start`  | Subscribe to liquidation alerts |
+| `/stop`   | Unsubscribe                     |
+| `/status` | View current subscriber count   |
 
-## Supported Networks (11)
+Each alert includes: protocol, chain, collateral asset, debt asset, borrower address, debt covered, liquidator address, block number, and a direct link to the transaction on the relevant block explorer.
 
-| Network         | Chain ID | BalanceHelper                                |
-| --------------- | -------- | -------------------------------------------- |
-| Ethereum        | 1        | `0xF6eDe5F60e6fB769F7571Ad635bF1Db0735a7386` |
-| BNB Smart Chain | 56       | `0xf481b013532d38227F57f46217B3696F2Ae592c8` |
-| Polygon         | 137      | `0xC55d7D06b3651816ea51700CB91235cd60Dd4d7D` |
-| Arbitrum        | 42161    | `0xdD5cFc64f74B2b5A4e80031DDf84597be449E3E3` |
-| Optimism        | 10       | `0x3d2104Da2B23562c47DCAE9EefE5063b6aB5c637` |
-| Base            | 8453     | `0xa3ba28ccDDa4Ba986F20E395D41F5bb37F8f900d` |
-| Avalanche       | 43114    | `0xa3ba28ccDDa4Ba986F20E395D41F5bb37F8f900d` |
-| Gnosis          | 100      | `0x510E86Be47994b0Fbc9aEF854B83d2f8906F7AD7` |
-| Linea           | 59144    | `0x06318Df33cea02503afc45FE65cdEAb8FAb3E20A` |
-| Scroll          | 534352   | `0x06318Df33cea02503afc45FE65cdEAb8FAb3E20A` |
-| Mantle          | 5000     | `0xeAbB01920C41e1C010ba74628996EEA65Df03550` |
+---
 
-All networks use Alchemy RPC for getLogs and all RPC calls.
+## REST API
 
-## API Endpoints
+The Hono API runs on `http://localhost:3001`.
 
-### Address API
+| Method | Endpoint                    | Description                                                            |
+| ------ | --------------------------- | ---------------------------------------------------------------------- |
+| GET    | `/api/liquidations`         | All liquidation events (supports `?protocol=`, `?network=`, `?limit=`) |
+| GET    | `/api/liquidations/:txHash` | Single event by transaction hash                                       |
+| GET    | `/api/borrower/:address`    | All liquidations for a borrower                                        |
+| GET    | `/api/liquidator/:address`  | All liquidations by a liquidator                                       |
+| GET    | `/api/status`               | Global indexer stats (total events, latest block)                      |
+| GET    | `/api/status/:network`      | Per-network stats and latest indexed block                             |
+| GET    | `/api/stats/protocol`       | Liquidation count grouped by protocol                                  |
+| GET    | `/api/stats/network`        | Liquidation count grouped by network                                   |
 
-```
-GET /api/getAddressesByFilter   # Filter addresses (network, fund, name, etc.)
-GET /api/getContractCount       # Contract count
-GET /api/networkCounts          # Per-network statistics
-```
-
-### Approval API
-
-```
-GET /api/approvals              # Query approvals (owner, spender, token, network)
-GET /api/approvals/stats        # Approval statistics by network
-```
+---
 
 ## Database Schema
 
-### `addresses` table
+### `liquidation_events`
 
-Discovered addresses from Transfer + Approval events.
+Core table storing all indexed liquidation logs.
 
-- PK: `(address, network)`
-- Fields: `deployed`, `fund`, `code_hash`, `contract_name`, `tags`, `first_seen`
+| Column            | Type      | Description                                    |
+| ----------------- | --------- | ---------------------------------------------- |
+| `id`              | BIGSERIAL | Primary key                                    |
+| `protocol`        | VARCHAR   | `aave`, `compound`, `morpho`, `spark`          |
+| `network`         | VARCHAR   | `mainnet`, `arbitrum`, `base`, etc.            |
+| `block_number`    | BIGINT    | Block where the event occurred                 |
+| `tx_hash`         | VARCHAR   | Transaction hash                               |
+| `log_index`       | INTEGER   | Log index within the transaction               |
+| `block_timestamp` | BIGINT    | Unix timestamp of the block                    |
+| `args`            | JSONB     | Raw event args (bigints serialized as strings) |
+| `args_decimal`    | JSONB     | Human-readable decimal values                  |
+| `created_at`      | TIMESTAMP | When the row was inserted                      |
 
-### `approvals` table
+Unique constraint: `(tx_hash, log_index)`
 
-ERC20 Approval events collected alongside Transfer events.
+### `indexing_progress`
 
-- PK: `(owner, spender, token_address, network)`
-- Fields: `value`, `block_number`, `tx_hash`, `first_seen`, `last_updated`
+Tracks the last indexed block per protocol/network for resuming after restarts.
 
-## System Requirements
+### `telegram_subscribers`
 
-| Resource   | Minimum | Recommended |
-| ---------- | ------- | ----------- |
-| CPU        | 2 cores | 4+ cores    |
-| RAM        | 2 GB    | 4-8 GB      |
-| Disk       | 10 GB   | 50 GB+      |
-| Node.js    | v16+    | v18+ LTS    |
-| PostgreSQL | 12+     | 14+         |
+Stores chat IDs, usernames, and subscription status for Telegram alert recipients.
 
-**External Services:**
+---
 
-- Alchemy (required) — All RPC calls
-- Etherscan (required) — Contract verification
-- Redis (optional) — Backend API caching
+## Event Normalization
 
-## Automation
+Each protocol uses different field names for the same concepts. The normalizer maps them to a consistent shape before storage and API delivery:
 
-```bash
-cd scanners/cron && ./setup-cron.sh --auto-setup
-```
+| Field             | Aave V3                      | Compound V3          | Morpho          | Spark                        |
+| ----------------- | ---------------------------- | -------------------- | --------------- | ---------------------------- |
+| Borrower          | `user`                       | `borrower`           | `borrower`      | `user`                       |
+| Liquidator        | `liquidator`                 | `absorber`           | `caller`        | `liquidator`                 |
+| Collateral seized | `liquidatedCollateralAmount` | `collateralAbsorbed` | `seizedAssets`  | `liquidatedCollateralAmount` |
+| Debt repaid       | `debtToCover`                | `usdValue`           | `repaidAssets`  | `debtToCover`                |
+| Bad debt          | —                            | —                    | `badDebtAssets` | —                            |
 
-| Scanner         | Schedule         |
-| --------------- | ---------------- |
-| UnifiedScanner  | Every 4 hours    |
-| FundUpdater     | Every 6 hours    |
-| DataRevalidator | Weekly (Sun 2AM) |
-| DB Optimization | Daily (5AM)      |
-
-## Configuration Reference
-
-```bash
-# Scanner timing
-TIMEDELAY_HOURS=4               # UnifiedScanner lookback (hours)
-TIMEOUT_SECONDS=7200            # Scanner timeout (seconds)
-
-# Fund updates
-FUNDUPDATEDELAY=7               # Days between updates
-FUND_UPDATE_MAX_BATCH=50000     # Max addresses per batch
-ALL_FLAG=true                   # Process all addresses
-HIGH_FUND_FLAG=true             # Only high-value (>100k USD)
-
-# Proxies (optional)
-USE_ALCHEMY_PROXY=false
-ALCHEMY_PROXY_URL=http://localhost:3002
-USE_ETHERSCAN_PROXY=false
-ETHERSCAN_PROXY_URL=http://localhost:3000
-```
+---
 
 ## License
 
