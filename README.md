@@ -100,7 +100,7 @@ unified-scanner.ts (every 30s)
 
 ```bash
 # Clone the repo
-git clone https://github.com/your-username/defi-liquidation-indexer
+git clone https://github.com/Kelechikizito/defi-liquidation-indexer
 cd defi-liquidation-indexer/scanners
 
 # Install dependencies
