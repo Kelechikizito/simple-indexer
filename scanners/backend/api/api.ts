@@ -28,7 +28,6 @@ function normalizeRow(row: any) {
 
   const explorerBase = EXPLORERS[row.network] ?? "https://etherscan.io/tx";
 
-  // map each protocol's field names to common names
   const fieldMap: Record<string, any> = {
     aave: {
       borrower: args.user,
@@ -137,6 +136,19 @@ app.get("/api/liquidator/:address", async (c) => {
     limit 50
   `;
   return c.json(result.map(normalizeRow));
+});
+
+// ↓ specific route BEFORE general route
+app.get("/api/status/:network", async (c) => {
+  const network = c.req.param("network").toLowerCase();
+  const result = await sql`
+    select
+      max(block_number) as latest_block,
+      count(*) as total_liquidations
+    from liquidation_events
+    where network = ${network}
+  `;
+  return c.json(result[0]);
 });
 
 app.get("/api/status", async (c) => {

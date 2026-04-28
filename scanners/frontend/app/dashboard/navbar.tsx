@@ -1,18 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-  latestBlockMainnet,
-  latestBlockArbitrum,
-  latestBlockOptimism,
-  latestBlockBase,
-  latestBlockZksync,
-  latestBlockAvalanche,
-  latestBlockLinea,
-  latestBlockMonad,
-  latestBlockPolygon,
-} from "../../components/utils/latest-block";
-
 import Link from "next/link";
 
 interface NavbarProps {
@@ -30,80 +18,53 @@ const CHAINS = [
   "Avalanche",
   "Linea",
   "ZkSync",
-  // Add "Monad" here if you want to show it in the UI
 ];
+
+const CHAIN_TO_NETWORK: Record<string, string> = {
+  "All chains": "",
+  Mainnet: "mainnet",
+  Arbitrum: "arbitrum",
+  Base: "base",
+  Optimism: "optimism",
+  Polygon: "polygon",
+  Avalanche: "avalanche",
+  Linea: "linea",
+  ZkSync: "zksync",
+};
 
 export function Navbar({ selectedChain, onChainChange }: NavbarProps) {
   const [latestBlock, setLatestBlock] = useState<number | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Map chain name → import function
-  const getLatestBlockFunction = (chain: string) => {
-    switch (chain) {
-      case "Mainnet":
-        return latestBlockMainnet;
-      case "Arbitrum":
-        return latestBlockArbitrum;
-      case "Optimism":
-        return latestBlockOptimism;
-      case "Base":
-        return latestBlockBase;
-      case "Polygon":
-        return latestBlockPolygon;
-      case "Avalanche":
-        return latestBlockAvalanche;
-      case "Linea":
-        return latestBlockLinea;
-      case "ZkSync":
-        return latestBlockZksync;
-      case "Monad":
-        return latestBlockMonad;
-      case "All chains":
-      default:
-        return latestBlockMainnet; // fallback
-    }
-  };
 
   useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
-
-    const fetchLatestBlock = async () => {
-      setIsLoading(true);
-      const fetchFn = getLatestBlockFunction(selectedChain);
-
+    const fetchStatus = async () => {
       try {
-        const block = await fetchFn();
-        setLatestBlock(block ? Number(block) : null);
-      } catch (error) {
-        console.error("Error fetching block in Navbar:", error);
-        setLatestBlock(null);
-      } finally {
-        setIsLoading(false);
+        const network = CHAIN_TO_NETWORK[selectedChain];
+        const url = network
+          ? `http://localhost:3001/api/status/${network}`
+          : `http://localhost:3001/api/status`;
+
+        const res = await fetch(url);
+        const data = await res.json();
+        setLatestBlock(Number(data.latest_block));
+      } catch (err) {
+        console.error("Failed to fetch status:", err);
       }
     };
 
-    // Initial fetch
-    fetchLatestBlock();
-
-    // Poll every 8 seconds (good balance for most chains)
-    interval = setInterval(fetchLatestBlock, 8000);
-
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [selectedChain]); // Re-run when user switches chain
+    fetchStatus();
+    const interval = setInterval(fetchStatus, 30_000);
+    return () => clearInterval(interval);
+  }, [selectedChain]);
 
   return (
     <nav className="sticky top-0 z-50 border-b border-[#1e1e2e] bg-[#0a0a0f]/95 backdrop-blur-sm">
       <div className="flex items-center justify-between px-6 py-4">
-        {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
           <div className="text-xl font-bold text-white">
             Liquid<span className="text-[#00d9ff]">Scan</span>
           </div>
         </Link>
 
-        {/* Chain Filters */}
         <div className="hidden flex-1 justify-center gap-2 md:flex">
           {CHAINS.map((chain) => (
             <button
@@ -120,7 +81,6 @@ export function Navbar({ selectedChain, onChainChange }: NavbarProps) {
           ))}
         </div>
 
-        {/* Live Status */}
         <div className="flex items-center gap-2">
           <div className="relative">
             <div className="absolute inset-0 animate-pulse rounded-full bg-green-500/30" />
@@ -129,13 +89,12 @@ export function Navbar({ selectedChain, onChainChange }: NavbarProps) {
           <div className="text-sm text-gray-400">
             Block{" "}
             <span className="font-mono text-white">
-              {isLoading ? "..." : (latestBlock ?? "—")}
+              {latestBlock?.toLocaleString() ?? "..."}
             </span>
           </div>
         </div>
       </div>
 
-      {/* Mobile Chain Filter */}
       <div className="border-t border-[#1e1e2e] px-6 py-3 md:hidden">
         <div className="flex gap-2 overflow-x-auto pb-2">
           {CHAINS.map((chain) => (
