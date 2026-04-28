@@ -1,12 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import {
+  latestBlockMainnet,
+  latestBlockArbitrum,
+  latestBlockOptimism,
+  latestBlockBase,
+  latestBlockZksync,
+  latestBlockAvalanche,
+  latestBlockLinea,
+  latestBlockMonad,
+  latestBlockPolygon,
+} from "../../components/utils/latest-block";
+
 import Link from "next/link";
 
 interface NavbarProps {
   selectedChain: string;
   onChainChange: (chain: string) => void;
-  latestBlock: number;
 }
 
 const CHAINS = [
@@ -19,13 +30,69 @@ const CHAINS = [
   "Avalanche",
   "Linea",
   "ZkSync",
+  // Add "Monad" here if you want to show it in the UI
 ];
 
-export function Navbar({
-  selectedChain,
-  onChainChange,
-  latestBlock,
-}: NavbarProps) {
+export function Navbar({ selectedChain, onChainChange }: NavbarProps) {
+  const [latestBlock, setLatestBlock] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Map chain name → import function
+  const getLatestBlockFunction = (chain: string) => {
+    switch (chain) {
+      case "Mainnet":
+        return latestBlockMainnet;
+      case "Arbitrum":
+        return latestBlockArbitrum;
+      case "Optimism":
+        return latestBlockOptimism;
+      case "Base":
+        return latestBlockBase;
+      case "Polygon":
+        return latestBlockPolygon;
+      case "Avalanche":
+        return latestBlockAvalanche;
+      case "Linea":
+        return latestBlockLinea;
+      case "ZkSync":
+        return latestBlockZksync;
+      case "Monad":
+        return latestBlockMonad;
+      case "All chains":
+      default:
+        return latestBlockMainnet; // fallback
+    }
+  };
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+
+    const fetchLatestBlock = async () => {
+      setIsLoading(true);
+      const fetchFn = getLatestBlockFunction(selectedChain);
+
+      try {
+        const block = await fetchFn();
+        setLatestBlock(block ? Number(block) : null);
+      } catch (error) {
+        console.error("Error fetching block in Navbar:", error);
+        setLatestBlock(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    // Initial fetch
+    fetchLatestBlock();
+
+    // Poll every 8 seconds (good balance for most chains)
+    interval = setInterval(fetchLatestBlock, 8000);
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [selectedChain]); // Re-run when user switches chain
+
   return (
     <nav className="sticky top-0 z-50 border-b border-[#1e1e2e] bg-[#0a0a0f]/95 backdrop-blur-sm">
       <div className="flex items-center justify-between px-6 py-4">
@@ -60,7 +127,10 @@ export function Navbar({
             <div className="relative h-2 w-2 rounded-full bg-green-500" />
           </div>
           <div className="text-sm text-gray-400">
-            Block <span className="font-mono text-white">{latestBlock}</span>
+            Block{" "}
+            <span className="font-mono text-white">
+              {isLoading ? "..." : (latestBlock ?? "—")}
+            </span>
           </div>
         </div>
       </div>
