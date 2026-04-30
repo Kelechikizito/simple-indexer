@@ -53,10 +53,16 @@ export function MetricsCards({
     {
       title: "Volume Liquidated",
       value: volumeLiquidated,
-      subtitle: "USD",
+      subtitle: "collateral seized (token units)",
       accentColor: "from-white/20 to-white/0",
       borderColor: "border-white/20",
-      format: (val: number) => `$${(val / 1e6).toFixed(1)}M`,
+      format: (val: number) => {
+        if (val === 0) return "—";
+        if (val < 0.0001) return val.toExponential(4);
+        if (val < 1) return val.toFixed(6);
+        if (val < 1000) return val.toFixed(4);
+        return `${(val / 1000).toFixed(2)}K`;
+      },
     },
     {
       title: "Unique Borrowers",

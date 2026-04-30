@@ -37,7 +37,7 @@ export default function DashboardPage() {
           "http://localhost:3001/api/liquidations?limit=200",
         );
         const data = await res.json();
-        console.log("API response sample:", data[0]); // add this to debug
+        console.log("API response sample:", data[0]); // add this to debugf
         setLiquidations(data);
         if (data.length > 0) {
           setLatestBlock(
@@ -64,10 +64,12 @@ export default function DashboardPage() {
         );
 
   const totalLiquidations = filtered.length;
-  const volumeLiquidated = filtered.reduce(
-    (sum, l) => sum + (l.collateralSeized || 0),
-    0,
-  );
+  const volumeLiquidated = filtered.reduce((sum, l: any) => {
+    const val = Number(
+      l.collateralSeized || l.args_decimal?.liquidatedCollateralAmount || 0,
+    );
+    return sum + (isNaN(val) ? 0 : val);
+  }, 0);
   const uniqueBorrowers = new Set(filtered.map((l) => l.borrower)).size;
   const protocolsMonitored = new Set(filtered.map((l) => l.protocol)).size;
 
