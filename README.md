@@ -8,6 +8,12 @@ The DeFi Liquidation Indexer monitors and indexes on-chain liquidation events fr
 
 ---
 
+## Demo
+
+[![Real-Time DeFi Liquidation Tracker — Aave, Compound, Morpho (8 Networks)](https://img.youtube.com/vi/2_rHZv5H7C8/maxresdefault.jpg)](https://www.youtube.com/watch?v=2_rHZv5H7C8)
+
+---
+
 ## Key Features
 
 - **Multi-Protocol Indexing** — Tracks liquidation events across Aave V3, Compound V3, Morpho, and Spark in a unified pipeline
