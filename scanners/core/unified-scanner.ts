@@ -29,7 +29,7 @@ export interface AllProtocolLogs {
 }
 
 /**
- * Optional: Format event logs using viem's formatUnits
+   Format event logs using viem's formatUnits
  * Pass this to unified scan if you want formatted values
  */
 export function formatLogValues(logs: any[], decimals: number = 18): any[] {

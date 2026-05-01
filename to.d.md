@@ -1,8 +1,0 @@
-- Demo Video with FocuSee
-  - Post on YT and Twitter
-- Improve your GitHub: Lawal ✅
-- touch up frontend ✅
-- understand the code from a-z
-- readme ✅
-- morpho telegram says undefined: create a sepearte formatting for each protocol
-- Download Peaky Blinders this weekend
